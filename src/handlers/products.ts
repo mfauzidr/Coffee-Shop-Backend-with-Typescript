@@ -155,9 +155,10 @@ export const updateProduct = async (req: Request<{ uuid: string }, {}, IProducts
     }
 
     if (req.file) {
-      const uploadResult = await cloudinaryUploader(req, 'product', uuid);
+      const uploadResult = await cloudinaryUploader(req, 'product', uuid as string);
 
       if (uploadResult.error) {
+        console.log(uploadResult.error);
         return res.status(400).json({
           success: false,
           message: 'Failed to upload image'
@@ -166,9 +167,11 @@ export const updateProduct = async (req: Request<{ uuid: string }, {}, IProducts
       const imageUrl = uploadResult.result?.secure_url;
       data.image = imageUrl
     }
-
-    console.log(req.body);
     const product = await update(uuid, data)
+    if (product.length === 0) {
+      throw new Error("Not Found")
+    }
+    console.log(product);
     if (product) {
       return res.json({
         success: true,
@@ -182,12 +185,12 @@ export const updateProduct = async (req: Request<{ uuid: string }, {}, IProducts
     })
   } catch (error) {
     const err = error as IErrResponse
-    if (req.file) {
-      const filePath = path.join(__dirname, '..', 'public', 'imgs', req.file.filename);
-      fs.unlink(filePath, (unlinkErr) => {
-        if (unlinkErr) console.error('Error deleting file:', unlinkErr);
-      });
-    }
+    // if (req.file) {
+    //   const filePath = path.join(__dirname, '..', 'public', 'imgs', req.file.filename);
+    //   fs.unlink(filePath, (unlinkErr) => {
+    //     if (unlinkErr) console.error('Error deleting file:', unlinkErr);
+    //   });
+    // }
 
     if (err instanceof multer.MulterError) {
       if (err.message === 'Incorrect File') {

@@ -158,8 +158,11 @@ export const updateUsers = async (req: Request<{ uuid: string }, {}, IUserBody>,
       data.password = hashed;
     }
 
+    console.log(req.file);
+
     if (req.file) {
       const uploadResult = await cloudinaryUploader(req, 'user', uuid);
+      console.log(uploadResult);
 
       if (uploadResult.error) {
         return res.status(400).json({

@@ -178,7 +178,7 @@ export const update = async (uuid: string, data: Partial<IProductsBody>): Promis
         SET ${columns.join(', ')},
         "updatedAt" = now()
         WHERE "uuid" = $1
-        RETURNING ${columns.join(', ')}
+        RETURNING *
     `
 
   const result: QueryResult<IProducts> = await db.query(query, values);

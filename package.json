@@ -8,8 +8,8 @@
   "scripts": {
     "build": "npm run clean && tsc --build && cp -r ./node_modules ./dist/node_modules",
     "start": "node ./dist/index.js",
-    "dev:local": "set NODE_ENV=local && nodemon --files index.ts",
-    "dev:prod": "set NODE_ENV=production && nodemon --files index.ts",
+    "dev:local": "set NODE_ENV=local && nodemon --files server.ts",
+    "dev:prod": "set NODE_ENV=production && nodemon --files server.ts",
     "clean": "rimraf /dist"
   },
   "keywords": [],
