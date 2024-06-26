@@ -4,7 +4,9 @@ import router from './src/routes'
 import morgan from "morgan"
 import cors, { CorsOptions } from 'cors'
 
-dotenv.config({ path: `./.env.${process.env.NODE_ENV}` })
+let path = "./.env.production"
+dotenv.config({ path })
+console.log(process.env.CLOUD_KEY);
 
 const app = express()
 app.use(express.json())

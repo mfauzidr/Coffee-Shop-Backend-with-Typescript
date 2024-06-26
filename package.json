@@ -6,7 +6,7 @@
     "build": "tsc --build",
     "start": "node ./dist/index.js",
     "dev:local": "set NODE_ENV=local && nodemon --files index.ts",
-    "dev:prod": "set NODE_ENV=prod && nodemon --files index.ts"
+    "dev:prod": "set NODE_ENV=production && nodemon --files index.ts"
   },
   "keywords": [],
   "author": "Moch Fauzi Dwi R",

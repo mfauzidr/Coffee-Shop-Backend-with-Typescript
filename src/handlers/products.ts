@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import { findAll, findDetails, insert, totalCount, update, deleteProduct } from "../repositories/products"
 import { IProducts, IProductsBody, IProductsParams, IProductsQueryParams } from "../models/products"
 import { IErrResponse, IProductsResponse } from '../models/response'
+import { cloudinaryUploader } from '../helper/cloudinary'
 import paginLink from '../helper/paginLink'
 import multer from 'multer'
 import fs from "fs"
@@ -93,6 +94,20 @@ export const createProduct = async (req: Request<{}, {}, IProductsBody>, res: Re
       req.body.image = imgUrl;
     }
     const product = await insert(req.body)
+    const productUuid = product[0].uuid
+
+    if (req.file) {
+      const uploadResult = await cloudinaryUploader(req, 'product', productUuid);
+
+      if (uploadResult.error) {
+        return res.status(400).json({
+          success: false,
+          message: 'Failed to upload image'
+        });
+      }
+      const imageUrl = uploadResult.result?.secure_url;
+      await update(productUuid, { image: imageUrl })
+    }
 
     return res.json({
       success: true,
@@ -103,12 +118,12 @@ export const createProduct = async (req: Request<{}, {}, IProductsBody>, res: Re
   } catch (error) {
     const err = error as IErrResponse
 
-    if (req.file) {
-      const filePath = path.join(__dirname, '..', 'public', 'imgs', req.file.filename);
-      fs.unlink(filePath, (unlinkErr) => {
-        if (unlinkErr) console.error('Error deleting file:', unlinkErr);
-      });
-    }
+    // if (req.file) {
+    //   const filePath = path.join(__dirname, '..', 'public', 'imgs', req.file.filename);
+    //   fs.unlink(filePath, (unlinkErr) => {
+    //     if (unlinkErr) console.error('Error deleting file:', unlinkErr);
+    //   });
+    // }
 
     if (err.code === "23505") {
       return res.status(400).json({
@@ -140,8 +155,16 @@ export const updateProduct = async (req: Request<{ uuid: string }, {}, IProducts
     }
 
     if (req.file) {
-      const imgUrl = `/imgs/${req.file.filename}`
-      req.body.image = imgUrl;
+      const uploadResult = await cloudinaryUploader(req, 'product', uuid);
+
+      if (uploadResult.error) {
+        return res.status(400).json({
+          success: false,
+          message: 'Failed to upload image'
+        });
+      }
+      const imageUrl = uploadResult.result?.secure_url;
+      data.image = imageUrl
     }
 
     console.log(req.body);

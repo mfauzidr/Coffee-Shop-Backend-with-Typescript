@@ -1,7 +1,8 @@
 import { Request, Response } from 'express'
 import { findAllUsers, findDetails, insert, update, deleteUser, totalCount } from "../repositories/users"
-import { IUserParams, IUserBody, IUserQueryParams } from '../models/users'
+import { IUserParams, IUserBody, IUserQueryParams, IUser } from '../models/users'
 import { IErrResponse, IUserResponse } from '../models/response'
+import { cloudinaryUploader } from '../helper/cloudinary'
 import paginLink from '../helper/paginLink'
 import bcrypt from "bcrypt"
 
@@ -102,12 +103,21 @@ export const createUsers = async (req: Request<{}, {}, IUserBody>, res: Response
     const hashed = await bcrypt.hash(password, salt)
     req.body.password = hashed
 
-    if (req.file) {
-      const imgUrl = `/imgs/${req.file.filename}`
-      req.body.image = imgUrl;
-    }
-
     const user = await insert(req.body)
+    const userUuid = user[0].uuid
+
+    if (req.file) {
+      const uploadResult = await cloudinaryUploader(req, 'user', userUuid);
+
+      if (uploadResult.error) {
+        return res.status(400).json({
+          success: false,
+          message: 'Failed to upload image'
+        });
+      }
+      const imageUrl = uploadResult.result?.secure_url;
+      await update(userUuid, { image: imageUrl })
+    }
     return res.json({
       success: true,
       message: 'Create user successfully',
@@ -148,9 +158,17 @@ export const updateUsers = async (req: Request<{ uuid: string }, {}, IUserBody>,
       data.password = hashed;
     }
 
-    if (file) {
-      const imgUrl = `/imgs/${file.filename}`
-      data.image = imgUrl;
+    if (req.file) {
+      const uploadResult = await cloudinaryUploader(req, 'user', uuid);
+
+      if (uploadResult.error) {
+        return res.status(400).json({
+          success: false,
+          message: 'Failed to upload image'
+        });
+      }
+      const imageUrl = uploadResult.result?.secure_url;
+      data.image = imageUrl
     }
 
     const user = await update(uuid, data);

@@ -67,7 +67,7 @@ export const singleUploader = (fieldName: string) => (req: Request, res: Respons
 export const multiUploader = (fieldName: string, maxCount: number) => uploader.array(fieldName, maxCount);
 export const multiFieldUploader = (fieldConfig: Field[]) => uploader.fields(fieldConfig);
 
-export const singleUploaderMemory = (fieldName: string) => (req: Request, res: Response, next: NextFunction) => {
+export const singleCloudUploader = (fieldName: string) => (req: Request, res: Response, next: NextFunction) => {
   const upload = cloudUploader.single(fieldName)
   upload(req, res, function (err) {
     const sizeErrReg = /File too large/
@@ -98,5 +98,5 @@ export const singleUploaderMemory = (fieldName: string) => (req: Request, res: R
   })
 };
 
-export const multiUploaderMemory = (fieldName: string, maxCount: number) => cloudUploader.array(fieldName, maxCount);
-export const multiFieldUploaderMemory = (fieldConfig: Field[]) => cloudUploader.fields(fieldConfig);
+export const multiCloudUploader = (fieldName: string, maxCount: number) => cloudUploader.array(fieldName, maxCount);
+export const multiFieldCloudUploader = (fieldConfig: Field[]) => cloudUploader.fields(fieldConfig);
