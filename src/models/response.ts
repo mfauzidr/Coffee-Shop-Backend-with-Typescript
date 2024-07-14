@@ -1,6 +1,7 @@
 import { IOrders } from "./orders";
 import { IProducts } from "./products";
 import { IPromos } from "./promos";
+import { ISizes, IVariants } from "./sizeAndVariants";
 import { IUser } from "./users";
 
 interface IPaginationMeta {
@@ -36,6 +37,14 @@ export interface IPromosResponse extends IBasicResponse {
 
 export interface IOrderResponse extends IBasicResponse {
   results?: IOrders[]
+}
+
+export interface ISizeResponse extends IBasicResponse {
+  results?: ISizes[]
+}
+
+export interface IVariantResponse extends IBasicResponse {
+  results?: IVariants[]
 }
 
 export interface IErrResponse {

@@ -4,9 +4,9 @@ import { authMiddleware } from "../middlewares/auth.middleware"
 
 const promosRouter = Router()
 
-promosRouter.get('/', authMiddleware(["admin", "customer"]), getAllPromos)
+promosRouter.get('/', getAllPromos)
 
-promosRouter.get('/:id', authMiddleware(["admin", "customer"]), getDetailPromos)
+promosRouter.get('/:id', getDetailPromos)
 
 promosRouter.post('/', authMiddleware(["admin"]), createPromos)
 
