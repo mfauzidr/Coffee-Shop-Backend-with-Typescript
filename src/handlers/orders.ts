@@ -182,11 +182,10 @@ export const createOrders = async (req: Request<{}, {}, IOrderDetailsBody>, res:
         console.log(subtotal);
       }));
 
-      const data: Partial<IOrders> = { subtotal };
+      const data: Partial<IOrders> = {};
 
       console.log(subtotal);
       const newOrder = await update(order[0].uuid, data);
-
       await client.query("COMMIT");
 
       res.status(201).json({

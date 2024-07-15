@@ -18,7 +18,7 @@ app.use(logger)
 const configs: CorsOptions = {
   origin: ["http://localhost:8888", "http://127.0.0.1:5500", "http://localhost:5173", "https://react-ts-cosho.vercel.app"],
   methods: ["POST", "PATCH"],
-  allowedHeaders: ["Authorization", "x-headers"],
+  allowedHeaders: ["Authorization", "x-headers", "Content-Type"],
 };
 app.use(cors(configs));
 
