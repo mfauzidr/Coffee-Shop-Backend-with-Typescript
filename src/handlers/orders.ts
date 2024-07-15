@@ -173,27 +173,25 @@ export const createOrders = async (req: Request<{}, {}, IOrderDetailsBody>, res:
         const sizeResult = await findOneSize(productSizeId);
         const variantResult = await findOneVariant(productVariantId);
 
-        console.log(`Product Price: ${productResult[0].price}`);
-        console.log(`Size Additional Price: ${sizeResult[0].additionalPrice}`);
-        console.log(`Variant Additional Price: ${variantResult[0].additionalPrice}`);
+        console.log(productResult, sizeResult, variantResult);
 
-        const productPrice = productResult[0].price;
-        const sizePrice = sizeResult[0].additionalPrice;
-        const variantPrice = variantResult[0].additionalPrice;
+        console.log(productResult[0].price, sizeResult[0].additionalPrice, variantResult[0].additionalPrice, quantity);
 
-        subtotal = (productPrice + sizePrice + variantPrice) * quantity;
+        subtotal = (productResult[0].price + sizeResult[0].additionalPrice + variantResult[0].additionalPrice) * quantity;
 
         console.log(subtotal);
       }));
 
       const data: Partial<IOrders> = { subtotal };
-      await update(order[0].uuid, data);
+
+      console.log(subtotal);
+      const newOrder = await update(order[0].uuid, data);
 
       await client.query("COMMIT");
 
       res.status(201).json({
         message: 'Order created successfully',
-        results: order
+        results: newOrder
       });
     } catch (error) {
       await client.query("ROLLBACK");

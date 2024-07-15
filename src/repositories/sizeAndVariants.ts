@@ -16,7 +16,7 @@ export const findAllVariant = async (): Promise<IVariants[]> => {
 
 export const findOneSize = async (id: number): Promise<ISizes[]> => {
   let query = `
-  SELECT "additionalPrice"
+  SELECT *
   FROM "productSize"
   WHERE id = $1
   `
@@ -27,7 +27,7 @@ export const findOneSize = async (id: number): Promise<ISizes[]> => {
 }
 export const findOneVariant = async (id: number): Promise<ISizes[]> => {
   let query = `
-  SELECT "additionalPrice"
+  SELECT *
   FROM "productVariant"
   WHERE id = $1
   `
