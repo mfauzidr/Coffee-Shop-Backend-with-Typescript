@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { findAll, findDetails, insert, totalCount, update, deleteProduct } from "../repositories/products"
+import { findAll, findDetails, insert, totalCount, update, deleteProduct, findOneById } from "../repositories/products"
 import { IProducts, IProductsBody, IProductsParams, IProductsQueryParams } from "../models/products"
 import { IErrResponse, IProductsResponse } from '../models/response'
 import { cloudinaryUploader } from '../helper/cloudinary'
@@ -256,3 +256,41 @@ export const deleteProducts = async (req: Request<IProductsParams>, res: Respons
     })
   }
 };
+
+export const getOneById = async (req: Request<IProducts>, res: Response<IProductsResponse>): Promise<Response> => {
+  const { id } = req.params
+
+  try {
+    const product = await findOneById(id)
+    if (product.length === 0) {
+      throw new Error("Not Found")
+    }
+    return res.json({
+      success: true,
+      message: 'OK',
+      results: product,
+    })
+  } catch (error) {
+    const err = error as IErrResponse
+
+    if (err.message === "Not Found") {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found',
+      })
+    }
+
+    if (err.code === "22P02") {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid UUID format.`
+      })
+    }
+
+    console.log(err)
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    })
+  }
+}

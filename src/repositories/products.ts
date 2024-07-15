@@ -196,3 +196,14 @@ export const deleteProduct = async (uuid: string): Promise<IProducts[]> => {
   const result = await db.query<IProducts>(query, values)
   return result.rows
 }
+
+
+export const findOneById = async (id: number): Promise<IProducts[]> => {
+  const query = `
+    SELECT * from "products"
+    WHERE id = $1;
+    `
+  const values: number[] = [id];
+  const { rows } = await db.query(query, values);
+  return rows;
+};

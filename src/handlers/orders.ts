@@ -1,8 +1,13 @@
 import { Request, Response } from 'express'
-import { findAll, findDetails, insert, update, deleteOrder, totalCount } from "../repositories/orders"
-import { IOrdersBody, IOrdersParams, IOrdersQueryParams } from "../models/orders"
+import { findAll, findDetails, insert as insertOrder, update, deleteOrder, totalCount } from "../repositories/orders"
+import { insert as insertDetails, update as updateDetails } from '../repositories/orderDetails';
+import { IOrderDetailsBody, IOrders, IOrdersBody, IOrdersParams, IOrdersQueryParams } from "../models/orders"
 import { IErrResponse, IOrderResponse } from '../models/response';
 import paginLink from '../helper/paginLink';
+import db from '../config/pg';
+import { findOneById } from '../repositories/products';
+import { findOneSize, findOneVariant } from '../repositories/sizeAndVariants';
+
 
 export const getAllOrders = async (req: Request<{}, {}, {}, IOrdersQueryParams>, res: Response<IOrderResponse>) => {
   try {
@@ -80,28 +85,141 @@ export const getDetailOrders = async (req: Request<IOrdersParams>, res: Response
   }
 };
 
-export const createOrders = async (req: Request<{}, {}, IOrdersBody>, res: Response<IOrderResponse>) => {
+// export const createOrders = async (req: Request<{}, {}, IOrdersBody>, res: Response<IOrderResponse>) => {
+//   try {
+//     const orders = await insert(req.body);
+//     return res.json({
+//       success: true,
+//       message: 'Create order successfully',
+//       results: orders,
+//     });
+//   } catch (error) {
+//     const err = error as IErrResponse
+//     if (err.code === '23502') {
+//       return res.status(400).json({
+//         success: false,
+//         message: `${err.column} Cannot be empty`,
+//       });
+//     }
+
+//     console.log(err);
+//     return res.status(500).json({
+//       success: false,
+//       message: 'Internal server error',
+//     });
+//   }
+// };
+
+export const createOrders = async (req: Request<{}, {}, IOrderDetailsBody>, res: Response<IOrderResponse>) => {
+  const { userId, fullName, email, deliveryAddress, deliveryMethod } = req.body;
+  let { productId, sizeId, variantId, qty } = req.body;
+
   try {
-    const orders = await insert(req.body);
-    return res.json({
-      success: true,
-      message: 'Create order successfully',
-      results: orders,
-    });
+    productId = (typeof productId === 'string') ? productId.split(',').map(Number) : productId;
+    sizeId = (typeof sizeId === 'string') ? sizeId.split(',').map(Number) : sizeId;
+    variantId = (typeof variantId === 'string') ? variantId.split(',').map(Number) : variantId;
+    qty = (typeof qty === 'string') ? qty.split(',').map(Number) : qty;
   } catch (error) {
-    const err = error as IErrResponse
+    return res.status(400).json({
+      message: 'Invalid input format for productId, sizeId, variantId, or qty'
+    });
+  }
+
+  console.log(productId, sizeId, variantId, qty);
+
+  // Pastikan semua input adalah array
+  if (!Array.isArray(productId) || !Array.isArray(sizeId) || !Array.isArray(variantId) || !Array.isArray(qty)) {
+    return res.status(400).json({
+      message: 'ProductId, sizeId, ProductVariantId, and Quantity should be arrays'
+    });
+  }
+
+  try {
+    const client = await db.connect();
+    try {
+      await client.query("BEGIN");
+
+      const orderData = {
+        userId,
+        fullName,
+        email,
+        deliveryAddress,
+        deliveryMethod
+      };
+
+      const order = await insertOrder(orderData);
+      let subtotal = 0;
+
+      // Ambil panjang array productId sebagai acuan untuk iterasi
+      const loop = await Promise.all(productId.map(async (productId: number, index: number) => {
+        const orderId = order[0].id;
+        const productSizeId = sizeId[index];
+        const productVariantId = variantId[index];
+        const quantity = qty[index];
+
+        const detailData = {
+          orderId,
+          productId,
+          productSizeId,
+          productVariantId,
+          quantity
+        };
+
+        console.log(`Inserting order detail: ${JSON.stringify(detailData)}`)
+
+        await insertDetails(detailData);
+
+        const productResult = await findOneById(productId);
+        const sizeResult = await findOneSize(productSizeId);
+        const variantResult = await findOneVariant(productVariantId);
+
+        console.log(`Product Price: ${productResult[0].price}`);
+        console.log(`Size Additional Price: ${sizeResult[0].additionalPrice}`);
+        console.log(`Variant Additional Price: ${variantResult[0].additionalPrice}`);
+
+        const productPrice = productResult[0].price;
+        const sizePrice = sizeResult[0].additionalPrice;
+        const variantPrice = variantResult[0].additionalPrice;
+
+        subtotal = (productPrice + sizePrice + variantPrice) * quantity;
+
+        console.log(subtotal);
+      }));
+
+      const data: Partial<IOrders> = { subtotal };
+      await update(order[0].uuid, data);
+
+      await client.query("COMMIT");
+
+      res.status(201).json({
+        message: 'Order created successfully',
+        results: order
+      });
+    } catch (error) {
+      await client.query("ROLLBACK");
+      const err = error as IErrResponse;
+      console.log(err);
+      res.status(500).json({
+        message: 'Error creating order',
+        err: err.message
+      });
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    const err = error as IErrResponse;
+    console.log(err);
     if (err.code === '23502') {
       return res.status(400).json({
         success: false,
         message: `${err.column} Cannot be empty`,
       });
+    } else {
+      res.status(500).json({
+        message: 'Database connection error',
+        err: err.message
+      });
     }
-
-    console.log(err);
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-    });
   }
 };
 

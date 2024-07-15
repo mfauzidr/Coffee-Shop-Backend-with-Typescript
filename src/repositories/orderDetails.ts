@@ -64,27 +64,27 @@ export const insert = async (data: any): Promise<IOrderDetails> => {
   return rows[0];
 };
 
-// export const update = async (id: number, data: any): Promise<IOrderDetails | undefined> => {
-//   const columns: string[] = [];
-//   const values: any[] = [];
+export const update = async (uuid: string, data: any): Promise<IOrderDetails | undefined> => {
+  const columns: string[] = [];
+  const values: any[] = [];
 
-//   for (let item in data) {
-//     values.push(data[item]);
-//     columns.push(`"${item}" = $${values.length}`);
-//   }
+  for (let item in data) {
+    values.push(data[item]);
+    columns.push(`"${item}" = $${values.length}`);
+  }
 
-//   const query = `
-//         UPDATE "orderDetails"
-//         SET ${columns.join(', ')}
-//         WHERE "id" = $${values.length + 1}
-//         RETURNING *
-//     `;
+  const query = `
+        UPDATE "orderDetails"
+        SET ${columns.join(', ')}
+        WHERE "id" = $${values.length + 1}
+        RETURNING *
+    `;
 
-//   values.push(id);
+  values.push(uuid);
 
-//   const { rows } = await db.query(query, values);
-//   return rows[0];
-// };
+  const { rows } = await db.query(query, values);
+  return rows[0];
+};
 
 export const deleteOrderDetail = async (id: number): Promise<IOrderDetails | undefined> => {
   const query = `DELETE FROM "orderDetails" WHERE "id" = $1

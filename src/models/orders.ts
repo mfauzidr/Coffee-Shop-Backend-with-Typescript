@@ -2,6 +2,7 @@ export interface IOrders extends IOrdersBody {
   id: number
   uuid: string
   orderNumber: string
+  subtotal: number
   promoId?: number
   taxAmount?: number
   createdAt: Date
@@ -19,10 +20,16 @@ export interface IOrdersQueryParams {
 }
 
 export interface IOrdersBody {
-  userId: number
-  productId: number[]
-  status: string
-  deliveryAddress?: string
-  fullName: string
-  email: string
+  userId: number;
+  fullName: string;
+  email: string;
+  deliveryAddress: string;
+  deliveryMethod: string;
+}
+
+export interface IOrderDetailsBody extends IOrdersBody {
+  productId: string | number[];
+  sizeId: string | number[];
+  variantId: string | number[];
+  qty: string | number[];
 }

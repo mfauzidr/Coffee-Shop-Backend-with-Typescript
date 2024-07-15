@@ -4,11 +4,11 @@ import { authMiddleware } from "../middlewares/auth.middleware"
 
 const ordersRouter = Router()
 
-ordersRouter.get('/', authMiddleware(["admin"]), getAllOrders)
+ordersRouter.get('/', getAllOrders)
 
 ordersRouter.get('/:uuid', authMiddleware(["admin", "customer"]), getDetailOrders)
 
-ordersRouter.post('/', authMiddleware(["admin", "customer"]), createOrders)
+ordersRouter.post('/', createOrders)
 
 ordersRouter.patch('/:uuid', authMiddleware(["admin", "customer"]), updateOrders)
 
