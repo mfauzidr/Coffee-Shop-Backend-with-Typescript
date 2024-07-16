@@ -62,7 +62,8 @@ export const findAllUsers = async (
   }
 
   const query = `
-    SELECT 
+    SELECT
+      "id",
       "fullName", 
       "email",
       "password",
@@ -86,6 +87,7 @@ export const findAllUsers = async (
 export const findDetails = async (uuid: string): Promise<IUser[]> => {
   const query = `
     SELECT
+      "id",
       "fullName",
       "email",
       "password",
