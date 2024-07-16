@@ -5,6 +5,7 @@ import { IUser, IUserBody } from "../models/users";
 export const getEmail = async (email: string): Promise<IUser> => {
   const query = `
     SELECT
+      "id",
       "uuid",
       "email",
       "password",
