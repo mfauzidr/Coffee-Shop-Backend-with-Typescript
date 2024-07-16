@@ -20,7 +20,7 @@ export const login = async (req: Request<{}, {}, IUserBody>, res: Response<IAuth
     const isValid = await bcrypt.compare(password, hash)
     if (!isValid) throw new Error('wrong');
 
-    const payload: IPayload = { uuid: user.uuid, role: user.role }
+    const payload: IPayload = { id: user.id, uuid: user.uuid, role: user.role }
     const token = jwt.sign(payload, process.env.JWT_SECRET as string, jwtOptions)
 
     return res.json({
