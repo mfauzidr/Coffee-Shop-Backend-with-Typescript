@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { findAll, findDetails, insert as insertOrder, update, deleteOrder, totalCount } from "../repositories/orders"
+import { findAll, findDetails, insert as insertOrder, update, deleteOrder, totalCount, findAllByUid, totalCountByUid } from "../repositories/orders"
 import { insert as insertDetails, update as updateDetails } from '../repositories/orderDetails';
 import { IOrderDetailsBody, IOrders, IOrdersBody, IOrdersParams, IOrdersQueryParams } from "../models/orders"
 import { IErrResponse, IOrderResponse } from '../models/response';
@@ -11,12 +11,20 @@ import { findOneSize, findOneVariant } from '../repositories/sizeAndVariants';
 
 export const getAllOrders = async (req: Request<{}, {}, {}, IOrdersQueryParams>, res: Response<IOrderResponse>) => {
   try {
-    const orders = await findAll(req.query);
+    let orders: IOrders[]
+    let count: number
+    if (req.query.userId) {
+      orders = await findAllByUid(req.query)
+      count = await totalCountByUid(req.query);
+    } else {
+      orders = await findAll(req.query);
+      count = await totalCount(req.query);
+    }
+
     if (orders.length < 1) {
       throw new Error('no_data')
     }
     const limit = req.query.limit
-    const count = await totalCount(req.query);
     const currentPage = parseInt((req.query.page as string) || '1');
     const totalData = count
     const totalPage = Math.ceil(totalData / parseInt(limit as string));

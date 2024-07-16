@@ -14,7 +14,8 @@ export interface IOrdersParams {
 }
 
 export interface IOrdersQueryParams {
-  searchOrder?: string
+  userId?: string
+  orderNumber?: string
   page?: string
   limit?: string
 }

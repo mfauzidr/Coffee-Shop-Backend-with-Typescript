@@ -2,15 +2,16 @@ import { QueryResult } from "pg"
 import db from "../config/pg"
 import { IOrders, IOrdersBody, IOrdersQueryParams } from "../models/orders"
 
-export const totalCount = async ({ searchOrder = '' }): Promise<number> => {
+export const totalCount = async ({ userId = '' }): Promise<number> => {
   let query = `
     SELECT COUNT(*) as total
     FROM "orders"
   `
   let values: string[] = [];
-  if (searchOrder) {
-    query += ` WHERE "orderNumber" ILIKE $1`;
-    values.push(`%${searchOrder}%`);
+
+  if (userId) {
+    query += ` WHERE "userId" ILIKE $1`;
+    values.push(`%${userId}%`);
   }
 
   const result: QueryResult<{ total: number }> = await db.query(query, values)
@@ -18,7 +19,7 @@ export const totalCount = async ({ searchOrder = '' }): Promise<number> => {
 }
 
 export const findAll = async (
-  { searchOrder = '',
+  { userId = '',
     page = '1',
     limit = '3' }
     : IOrdersQueryParams
@@ -27,9 +28,9 @@ export const findAll = async (
 
   let findOrderQuery = ''
   let values: string[] = []
-  if (searchOrder) {
-    findOrderQuery = `WHERE "orderNumber" ILIKE $1`
-    values.push(`%${searchOrder}%`)
+  if (userId) {
+    findOrderQuery = `WHERE "userId" ILIKE $1`
+    values.push(`%${userId}%`)
   }
   const query = `SELECT * FROM "orders"
   ${findOrderQuery}
@@ -42,7 +43,7 @@ export const findAll = async (
 export const findDetails = async (uuid: string): Promise<IOrders[]> => {
   const query = `
     SELECT
-    "o"."orderNumber",
+    "o"."userId",
     "p"."name" AS "productName",
     "ps"."size",
     "pv"."name" AS "variant",
@@ -72,7 +73,7 @@ export const insert = async (data: Partial<IOrdersBody>): Promise<IOrders[]> => 
 
   const query = `
     INSERT INTO "orders"
-    (status, ${columns.join(', ')}, "orderNumber")
+    (status, ${columns.join(', ')}, "userId")
     VALUES
     ($1, ${insertedValues.substring(insertedValues.indexOf(',') + 2)}, generate_order_number())
     RETURNING *
@@ -106,7 +107,7 @@ export const insert = async (data: Partial<IOrdersBody>): Promise<IOrders[]> => 
 //   const insertedValues: string = values.slice(0, columns.length).map((_, index) => `$${index + 1}`).join(', ')
 
 //   const query = `
-//     INSERT INTO "orders" ("orderNumber", ${columns.join(', ')}, "subtotal")
+//     INSERT INTO "orders" ("userId", ${columns.join(', ')}, "subtotal")
 //     VALUES (generate_order_number(), ${insertedValues}, (${totalQuery}))
 //     RETURNING *
 //   `
@@ -159,4 +160,51 @@ export const deleteOrder = async (uuid: string): Promise<IOrders[]> => {
   const values = [uuid]
   const result: QueryResult<IOrders> = await db.query(query, values);
   return result.rows
+}
+
+
+export const totalCountByUid = async ({ userId = '' }): Promise<number> => {
+  let values: string[] = [];
+
+  let clause = '';
+  if (userId) {
+    clause += ` WHERE "userId" = $1`;
+    values.push(`${userId}`);
+  }
+  let query = `
+    SELECT COUNT(*) as total
+    FROM "orders"
+    ${clause}
+  `;
+
+  const result: QueryResult<{ total: number }> = await db.query(query, values);
+  return result.rows[0].total;
+}
+
+
+export const findAllByUid = async (
+  { userId = '',
+    page = '1',
+    limit = '6' }
+    : IOrdersQueryParams
+): Promise<IOrders[]> => {
+  const offset: number = (parseInt(page) - 1) * parseInt(limit);
+
+  let values: string[] = [];
+  let clause = '';
+  if (userId) {
+    clause += ` WHERE "userId" = $1`;
+    values.push(`${userId}`);
+  }
+  const query = `
+    SELECT *
+    FROM "orders"
+    ${clause}
+    ORDER BY "createdAt" DESC
+    LIMIT $2 OFFSET $3
+  `;
+  values.push(`${limit}`, `${offset}`);
+
+  const result: QueryResult<IOrders> = await db.query(query, values);
+  return result.rows;
 }
