@@ -6,7 +6,7 @@ Coffee Shop App is a simple application for managing a coffee shop. This applica
 
 1. [About Project](#about-project)
 2. [Start](#start)
-- [Prerequisites](#prerequisites)
+- [Get Started](#get-started)
 - [Installation](#installation)
 3. [Contact](#contact)
 
@@ -30,7 +30,7 @@ This Coffee Shop application was built with the aim of making it easier for user
 
 ## Start
 
-### Prerequisites
+### Get Started
 
 Make sure you have Node.js and npm installed on your computer.
 
