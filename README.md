@@ -1,4 +1,4 @@
-# Coffee Shop App
+# Coffee Shop Backend with Typescript
 
 Coffee Shop App is a simple application for managing a coffee shop. This application allows users to register accounts, log in, add products and carry out transactions like a coffee shop in general.
 
