@@ -8,8 +8,8 @@ interface IPaginationMeta {
   totalData?: number
   currentPage?: number
   totalPage?: number
-  nextPage: string | null
-  prevPage: string | null
+  nextPage?: string | null
+  prevPage?: string | null
 }
 
 interface IBasicResponse {

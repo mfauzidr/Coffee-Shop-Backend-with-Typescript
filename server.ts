@@ -6,7 +6,6 @@ import cors, { CorsOptions } from 'cors'
 
 let path = "./.env.production"
 dotenv.config({ path })
-console.log(process.env.CLOUD_KEY);
 
 const app = express()
 app.use(express.json())
@@ -31,7 +30,7 @@ app.get("/", (req: Request, res: Response) => res.json({
 
 app.use(router)
 
-const PORT = process.env.PORT || 8888
+const PORT = process.env.PORT || 8080
 
 app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}`)

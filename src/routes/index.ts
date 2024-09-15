@@ -7,6 +7,7 @@ import ordersRouter from "./orders"
 import orderDetailsRouter from "./orderDetails"
 import authRouter from "./auth"
 import { sizeRouter, variantRouter } from "./sizeAndVariants"
+import { categoryRouter } from "./categories"
 
 const router = Router()
 
@@ -17,6 +18,7 @@ router.use("/orders", ordersRouter)
 router.use("/orderDetails", orderDetailsRouter)
 router.use("/size", sizeRouter)
 router.use("/variant", variantRouter)
+router.use("/categories", categoryRouter)
 
 router.use("/", authRouter)
 

@@ -16,8 +16,8 @@ export interface IProductsParams {
 
 export interface IProductsQueryParams {
   search?: string
-  filter?: string
-  orderBy?: string
+  category?: string
+  sortBy?: string
   maximum?: number
   minimum?: number
   page?: string
