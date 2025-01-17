@@ -35,7 +35,6 @@ export const totalCount = async ({
   }
 
   if (category) {
-    // Split the category string into an array and create a condition for IN clause
     const categories = category.split(",").map((cat) => cat.trim());
     const categoryConditions = categories
       .map((_, index) => `"c"."name" ILIKE $${values.length + 1 + index}`)
@@ -83,7 +82,6 @@ export const findAll = async ({
   }
 
   if (category) {
-    // Split the category string into an array and create a condition for IN clause
     const categories = category.split(",").map((cat) => cat.trim());
     const categoryConditions = categories
       .map((_, index) => `"c"."name" ILIKE $${values.length + 1 + index}`)

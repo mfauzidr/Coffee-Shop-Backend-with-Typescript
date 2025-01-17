@@ -24,17 +24,36 @@ export const getAllProducts = async (
   res: Response<IProductsResponse>
 ) => {
   try {
-    const products = await findAll(req.query);
+    const { priceRange } = req.query;
+
+    let minPrice: number;
+    let maxPrice: number;
+
+    if (priceRange && Array.isArray(priceRange) && priceRange.length === 2) {
+      [minPrice, maxPrice] = priceRange;
+    } else {
+      minPrice = 1000;
+      maxPrice = Infinity;
+    }
+
+    const query = {
+      ...req.query,
+      minPrice,
+      maxPrice,
+    };
+
+    const products = await findAll(query);
+
     if (products.length < 1) {
       throw new Error("no_data");
     }
+
     const limit = req.query.limit || "6";
-    const count = await totalCount(req.query);
+    const count = await totalCount(query);
     const currentPage = parseInt((req.query.page as string) || "1");
     const totalData = count;
     const totalPage = Math.ceil(totalData / parseInt(limit as string));
-    console.log(totalPage);
-    console.log(req.query);
+
     return res.status(200).json({
       meta: {
         totalData,
@@ -62,6 +81,7 @@ export const getAllProducts = async (
     });
   }
 };
+
 export const getDetailProduct = async (
   req: Request<IProducts>,
   res: Response<IProductsResponse>

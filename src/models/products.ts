@@ -18,6 +18,7 @@ export interface IProductsQueryParams {
   search?: string;
   category?: string;
   sortBy?: string;
+  priceRange?: [number, number];
   minPrice?: number;
   maxPrice?: number;
   page?: string;

@@ -60,19 +60,14 @@ export const redirectIfAuthenticated = (
 
   if (token) {
     try {
-      // Validasi token menggunakan JWT
       const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
       if (decoded) {
-        // Redirect ke home jika token valid
         res.redirect("/");
         return;
       }
     } catch (err) {
-      // Jika token tidak valid, lanjutkan ke endpoint login
       return next();
     }
   }
-
-  // Jika token tidak ada, lanjutkan ke login
   next();
 };
