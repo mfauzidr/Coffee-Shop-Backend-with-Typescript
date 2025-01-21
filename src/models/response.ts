@@ -1,3 +1,4 @@
+import { ICart } from "./cart";
 import { IOrders } from "./orders";
 import { IProducts } from "./products";
 import { IPromos } from "./promos";
@@ -5,51 +6,55 @@ import { ISizes, IVariants } from "./sizeAndVariants";
 import { IUser } from "./users";
 
 interface IPaginationMeta {
-  totalData?: number
-  currentPage?: number
-  totalPage?: number
-  nextPage?: string | null
-  prevPage?: string | null
+  totalData?: number;
+  currentPage?: number;
+  totalPage?: number;
+  nextPage?: string | null;
+  prevPage?: string | null;
 }
 
 interface IBasicResponse {
-  success?: boolean
-  message: string
-  err?: string
-  meta?: IPaginationMeta
+  success?: boolean;
+  message: string;
+  err?: string;
+  meta?: IPaginationMeta;
 }
 
 export interface IUserResponse extends IBasicResponse {
-  results?: IUser[]
+  results?: IUser[];
 }
 export interface IAuthResponse extends IBasicResponse {
   results?: { token: string }[];
-  uuid?: string
+  uuid?: string;
 }
 
 export interface IProductsResponse extends IBasicResponse {
-  results?: IProducts[]
+  results?: IProducts[];
 }
 
 export interface IPromosResponse extends IBasicResponse {
-  results?: IPromos[]
+  results?: IPromos[];
 }
 
 export interface IOrderResponse extends IBasicResponse {
-  results?: IOrders[]
+  results?: IOrders[];
 }
 
 export interface ISizeResponse extends IBasicResponse {
-  results?: ISizes[]
+  results?: ISizes[];
 }
 
 export interface IVariantResponse extends IBasicResponse {
-  results?: IVariants[]
+  results?: IVariants[];
+}
+
+export interface ICartResponse extends IBasicResponse {
+  results?: ICart[];
 }
 
 export interface IErrResponse {
-  code?: string
-  column?: string
-  detail?: string
-  message?: string
+  code?: string;
+  column?: string;
+  detail?: string;
+  message?: string;
 }
