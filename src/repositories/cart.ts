@@ -8,7 +8,7 @@ export const findAll = async ({
   let whereQuery = "";
   let values: string[] = [];
   if (userId) {
-    whereQuery = `WHERE "u"."uuid" ILIKE $1`;
+    whereQuery = `WHERE "u"."uuid" = $1`;
     values.push(`${userId}`);
   }
   const query = `
@@ -21,7 +21,7 @@ export const findAll = async ({
     "c"."subtotal"
     FROM "cart" "c"
     JOIN "users" "u" on "c"."userId" = "u"."uuid"
-    JOIN "products" "p" ON "c"."productId" = "p"."id"
+    JOIN "products" "p" ON "c"."productId" = "p"."uuid"
     JOIN "productSize" "ps" ON "c"."productSizeId" = "ps"."id"
     JOIN "productVariant" "pv" ON "c"."productVariantId" = "pv"."id"
     ${whereQuery}
@@ -43,25 +43,28 @@ export const findAllByUid = async ({
     SELECT
     "u"."uuid" as "userId",
     "p"."name" AS "productName",
+    "p"."image",
     "quantity",
     "ps"."size",
     "pv"."name" AS "variant",
     "c"."subtotal"
     FROM "cart" "c"
-    JOIN "users" "u" on "c"."userId" = "u"."uuid"
-    JOIN "products" "p" ON "c"."productId" = "p"."id"
+    JOIN "users" "u" ON "c"."userId" = "u"."uuid"
+    JOIN "products" "p" ON "c"."productId" = "p"."uuid"
     JOIN "productSize" "ps" ON "c"."productSizeId" = "ps"."id"
     JOIN "productVariant" "pv" ON "c"."productVariantId" = "pv"."id"
     ${clause}
+    ORDER BY COALESCE("c"."updatedAt", "c"."createdAt") DESC;
+
     `;
   const result: QueryResult<ICart> = await db.query(query, values);
   return result.rows;
 };
 
-export const findDetails = async (id: number): Promise<ICart> => {
+export const findCartById = async (id: number): Promise<ICart> => {
   const query = `
     SELECT
-    "u"."uuid" as "userId",
+    "p"."uuid" as "productId",
     "p"."name" AS "productName",
     "quantity",
     "ps"."size",
@@ -69,7 +72,7 @@ export const findDetails = async (id: number): Promise<ICart> => {
     "c"."subtotal"
     FROM "cart" "c"
     JOIN "users" "u" on "c"."userId" = "u"."uuid"
-    JOIN "products" "p" ON "c"."productId" = "p"."id"
+    JOIN "products" "p" ON "c"."productId" = "p"."uuid"
     JOIN "productSize" "ps" ON "c"."productSizeId" = "ps"."id"
     JOIN "productVariant" "pv" ON "c"."productVariantId" = "pv"."id"
     WHERE "c"."id" = $1
@@ -93,7 +96,7 @@ export const insert = async (data: any): Promise<ICart> => {
     .join(", ");
 
   const query = `
-        INSERT INTO "orderDetails"
+        INSERT INTO "cart"
         (${columns.join(", ")})
         VALUES
         (${insertedValues})
@@ -104,30 +107,31 @@ export const insert = async (data: any): Promise<ICart> => {
   return rows[0];
 };
 
-// export const update = async (
-//   uuid: string,
-//   data: any
-// ): Promise<ICart | undefined> => {
-//   const columns: string[] = [];
-//   const values: any[] = [];
+export const update = async (id: number, data: any): Promise<ICart> => {
+  const columns: string[] = [];
+  const values: any[] = [];
 
-//   for (let item in data) {
-//     values.push(data[item]);
-//     columns.push(`"${item}" = $${values.length}`);
-//   }
+  for (let item in data) {
+    values.push(data[item]);
+    columns.push(`"${item}" = $${values.length}`);
+  }
 
-//   const query = `
-//         UPDATE "orderDetails"
-//         SET ${columns.join(", ")}
-//         WHERE "id" = $${values.length + 1}
-//         RETURNING *
-//     `;
+  const query = `
+        UPDATE "cart"
+        SET ${columns.join(", ")}
+        WHERE "id" = $${values.length + 1}
+        RETURNING *
+    `;
 
-//   values.push(uuid);
+  console.log(query);
 
-//   const { rows } = await db.query(query, values);
-//   return rows[0];
-// };
+  values.push(id);
+
+  console.log(values);
+
+  const { rows } = await db.query(query, values);
+  return rows[0];
+};
 
 // export const deleteOrderDetail = async (
 //   id: number

@@ -1,7 +1,19 @@
-export interface ICart extends ICartBody {
+export interface ICartUpdateBody {
+  productSizeId?: number;
+  productVariantId?: number;
+  quantity?: number;
+  subtotal?: number;
+}
+
+export interface ICart {
   id: number;
+  userId: string;
+  productId: string | number[];
+  sizeId: string | number[];
+  variantId: string | number[];
+  qty: string | number[];
   productName: string;
-  quantity: number;
+  image?: string;
   size?: string;
   variant?: string;
   subtotal: number;
@@ -19,9 +31,12 @@ export interface ICartQueryParams {
 
 export interface ICartBody {
   userId: string;
-  productId: number;
-  qty: number;
-  sizeId: number;
-  variantId: number;
-  subtotal: number;
+  productId: string | string[];
+  sizeId: string | number[];
+  variantId: string | number[];
+  qty: string | number[];
+}
+
+export interface ICartBatchUpdateBody extends ICartBody {
+  id: number;
 }

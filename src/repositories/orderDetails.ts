@@ -1,5 +1,5 @@
 import db from "../config/pg";
-import { IOrderDetails } from "../models/orderDetails"
+import { IOrderDetails } from "../models/orderDetails";
 
 export const findAll = async (): Promise<IOrderDetails[]> => {
   const query = `
@@ -50,11 +50,13 @@ export const insert = async (data: any): Promise<IOrderDetails> => {
     columns.push(`"${item}"`);
   }
 
-  const insertedValues = values.map((value, index) => `$${index + 1}`).join(', ');
+  const insertedValues = values
+    .map((value, index) => `$${index + 1}`)
+    .join(", ");
 
   const query = `
         INSERT INTO "orderDetails"
-        (${columns.join(', ')})
+        (${columns.join(", ")})
         VALUES
         (${insertedValues})
         RETURNING *
@@ -64,7 +66,10 @@ export const insert = async (data: any): Promise<IOrderDetails> => {
   return rows[0];
 };
 
-export const update = async (uuid: string, data: any): Promise<IOrderDetails | undefined> => {
+export const update = async (
+  uuid: string,
+  data: any
+): Promise<IOrderDetails> => {
   const columns: string[] = [];
   const values: any[] = [];
 
@@ -75,7 +80,7 @@ export const update = async (uuid: string, data: any): Promise<IOrderDetails | u
 
   const query = `
         UPDATE "orderDetails"
-        SET ${columns.join(', ')}
+        SET ${columns.join(", ")}
         WHERE "id" = $${values.length + 1}
         RETURNING *
     `;
@@ -86,7 +91,9 @@ export const update = async (uuid: string, data: any): Promise<IOrderDetails | u
   return rows[0];
 };
 
-export const deleteOrderDetail = async (id: number): Promise<IOrderDetails | undefined> => {
+export const deleteOrderDetail = async (
+  id: number
+): Promise<IOrderDetails | undefined> => {
   const query = `DELETE FROM "orderDetails" WHERE "id" = $1
     RETURNING *`;
   const values: any[] = [id];
