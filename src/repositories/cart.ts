@@ -13,8 +13,9 @@ export const findAll = async ({
   }
   const query = `
     SELECT
-    "u"."uuid" as "userId",
+    "c"."id",
     "p"."name" AS "productName",
+    "p"."image",
     "quantity",
     "ps"."size",
     "pv"."name" AS "variant",
@@ -41,7 +42,7 @@ export const findAllByUid = async ({
   }
   const query = `
     SELECT
-    "u"."uuid" as "userId",
+    "c"."id",
     "p"."name" AS "productName",
     "p"."image",
     "quantity",
@@ -49,7 +50,7 @@ export const findAllByUid = async ({
     "pv"."name" AS "variant",
     "c"."subtotal"
     FROM "cart" "c"
-    JOIN "users" "u" ON "c"."userId" = "u"."uuid"
+    JOIN "users" "u" on "c"."userId" = "u"."uuid"
     JOIN "products" "p" ON "c"."productId" = "p"."uuid"
     JOIN "productSize" "ps" ON "c"."productSizeId" = "ps"."id"
     JOIN "productVariant" "pv" ON "c"."productVariantId" = "pv"."id"
@@ -78,6 +79,18 @@ export const findCartById = async (id: number): Promise<ICart> => {
     WHERE "c"."id" = $1
     `;
   const values: any[] = [id];
+  const { rows } = await db.query(query, values);
+  return rows[0];
+};
+
+export const findCartByProduct = async (uuid: string): Promise<ICart> => {
+  const query = `
+    SELECT
+    *
+    FROM "cart" "c"
+    WHERE "productId" = $1
+    `;
+  const values: any[] = [uuid];
   const { rows } = await db.query(query, values);
   return rows[0];
 };
