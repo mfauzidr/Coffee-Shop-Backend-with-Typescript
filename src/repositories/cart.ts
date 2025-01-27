@@ -133,12 +133,10 @@ export const update = async (id: number, data: any): Promise<ICart> => {
   return rows[0];
 };
 
-// export const deleteOrderDetail = async (
-//   id: number
-// ): Promise<ICart | undefined> => {
-//   const query = `DELETE FROM "orderDetails" WHERE "id" = $1
-//     RETURNING *`;
-//   const values: any[] = [id];
-//   const { rows } = await db.query(query, values);
-//   return rows[0];
-// };
+export const deleteCart = async (id: number): Promise<ICart> => {
+  const query = `DELETE FROM "cart" WHERE "id" = $1
+    RETURNING *`;
+  const values: any[] = [id];
+  const { rows } = await db.query(query, values);
+  return rows[0];
+};

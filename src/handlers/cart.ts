@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import {
+  deleteCart,
   findAll,
   findAllByUid,
   findCartById,
@@ -14,7 +15,7 @@ import {
   ICartUpdateBody,
 } from "../models/cart";
 import { ICartResponse, IErrResponse } from "../models/response";
-import { findDetails, findOneById } from "../repositories/products";
+import { findDetails } from "../repositories/products";
 import { findOneSize, findOneVariant } from "../repositories/sizeAndVariants";
 import db from "../config/pg";
 
@@ -116,14 +117,12 @@ export const insertCart = async (
             throw new Error("Product, size, or variant not found");
           }
 
-          // Calculate subtotal
           const subtotal =
             (productResult[0].price +
               sizeResult[0].additionalPrice +
               variantResult[0].additionalPrice) *
             quantity;
 
-          // Prepare cart data
           const cartData = {
             userId,
             productId,
@@ -133,17 +132,10 @@ export const insertCart = async (
             subtotal,
           };
 
-          console.log(cartData);
-
-          // Insert cart item
           const cart = await insert(cartData);
-
-          //return result to use in res status
           return cart;
         })
       );
-
-      //take return cart here for res status
 
       await client.query("COMMIT");
 
@@ -182,14 +174,13 @@ export const insertCart = async (
 };
 
 export const updateCart = async (
-  req: Request<ICartParams, {}, ICartUpdateBody>, // Gunakan ICartUpdateBody
+  req: Request<ICartParams, {}, ICartUpdateBody>,
   res: Response<ICartResponse>
 ) => {
-  const { id } = req.params; // Ambil ID dari params
-  const { productSizeId, productVariantId, quantity } = req.body; // Ambil data opsional dari body
+  const { id } = req.params;
+  const { productSizeId, productVariantId, quantity } = req.body;
 
   try {
-    // Ambil data cart dari database berdasarkan ID
     const existingCart = await findCartById(id);
     if (!existingCart) {
       return res.status(404).json({
@@ -197,36 +188,26 @@ export const updateCart = async (
         message: "Cart not found",
       });
     }
-
-    // Siapkan data yang akan diperbarui
     const updates: ICartUpdateBody = {};
 
-    // Perbarui hanya field yang dikirim
-    if (productSizeId !== undefined) updates.productSizeId = productSizeId;
-    if (productVariantId !== undefined)
-      updates.productVariantId = productVariantId;
-    if (quantity !== undefined) updates.quantity = quantity;
+    if (productSizeId) updates.productSizeId = productSizeId;
+    if (productVariantId) updates.productVariantId = productVariantId;
+    if (quantity) updates.quantity = quantity;
 
-    // Jika ada perubahan yang memengaruhi subtotal, hitung ulang
     if (productSizeId || productVariantId || quantity) {
-      const sizeToUse =
-        productSizeId !== undefined ? productSizeId : existingCart.sizeId;
-      const variantToUse =
-        productVariantId !== undefined
-          ? productVariantId
-          : existingCart.variantId;
-      const qtyToUse =
-        quantity !== undefined ? Number(quantity) : existingCart.qty;
+      const sizeToUse = productSizeId ? productSizeId : existingCart.sizeId;
+      const variantToUse = productVariantId
+        ? productVariantId
+        : existingCart.variantId;
+      const qtyToUse = quantity ? Number(quantity) : existingCart.qty;
 
-      // Pastikan productId adalah tipe yang tepat (mengatasi masalah 'string' atau 'number[]')
       const productId = Array.isArray(existingCart.productId)
-        ? existingCart.productId[0] // Ambil produk pertama jika array
+        ? existingCart.productId[0]
         : existingCart.productId;
 
-      // Ambil data terkait untuk perhitungan ulang
-      const productResult = await findDetails(String(productId)); // Gunakan productId yang sudah disesuaikan
-      const sizeResult = await findOneSize(Number(sizeToUse)); // Pastikan sizeId adalah number
-      const variantResult = await findOneVariant(Number(variantToUse)); // Pastikan variantId adalah number
+      const productResult = await findDetails(String(productId));
+      const sizeResult = await findOneSize(Number(sizeToUse));
+      const variantResult = await findOneVariant(Number(variantToUse));
 
       if (!productResult || !sizeResult || !variantResult) {
         return res.status(404).json({
@@ -235,18 +216,15 @@ export const updateCart = async (
         });
       }
 
-      // Hitung subtotal baru jika ada perubahan pada qty, size, atau variant
       const newSubtotal =
         (productResult[0].price +
           sizeResult[0].additionalPrice +
           variantResult[0].additionalPrice) *
         Number(qtyToUse);
 
-      // Tambahkan subtotal ke updates
       updates.subtotal = newSubtotal;
     }
 
-    // Perbarui data cart di database
     const updatedCart = await update(Number(id), updates);
 
     if (!updatedCart) {
@@ -263,17 +241,37 @@ export const updateCart = async (
   } catch (error) {
     const err = error as IErrResponse;
     console.error(err);
-
-    if (err.code === "22P02") {
-      return res.status(400).json({
-        success: false,
-        message: `Invalid UUID format.`,
-      });
-    }
-
     return res.status(500).json({
       success: false,
       message: "Internal Server Error",
+    });
+  }
+};
+
+export const deleteCarts = async (
+  req: Request<ICartParams>,
+  res: Response<ICartResponse>
+) => {
+  const { id } = req.params;
+
+  try {
+    const cart = await deleteCart(id);
+    if (!cart) {
+      return res.status(404).json({
+        success: false,
+        message: "cart not found",
+      });
+    }
+    return res.json({
+      success: true,
+      message: "Delete success",
+    });
+  } catch (error) {
+    const err = error as IErrResponse;
+    console.error(JSON.stringify(error));
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
     });
   }
 };
