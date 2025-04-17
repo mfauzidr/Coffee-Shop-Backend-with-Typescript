@@ -4,6 +4,7 @@ import {
   findAll,
   findAllByUid,
   findCartById,
+  findCartDetails,
   insert,
   update,
 } from "../repositories/cart";
@@ -63,7 +64,6 @@ export const insertCart = async (
 ) => {
   const { userId } = req.body;
   let { productId, sizeId, variantId, qty } = req.body;
-  console.log({ productId, sizeId, variantId, qty });
 
   try {
     productId =
@@ -77,13 +77,12 @@ export const insertCart = async (
         ? variantId.split(",").map(Number)
         : variantId;
     qty = typeof qty === "string" ? qty.split(",").map(Number) : qty;
-  } catch {
+  } catch (err) {
     return res.status(400).json({
       message:
         "Invalid input format for productId, sizeId, variantId, or quantity",
     });
   }
-  console.log({ productId, sizeId, variantId, qty });
 
   if (
     !Array.isArray(productId) ||
@@ -93,8 +92,7 @@ export const insertCart = async (
   ) {
     return res.status(400).json({
       success: false,
-      message:
-        "productId, productSizeId, productVariantId, and quantity should be arrays",
+      message: "productId, sizeId, variantId, and qty should all be arrays",
     });
   }
 
@@ -102,16 +100,74 @@ export const insertCart = async (
   try {
     await client.query("BEGIN");
 
-    try {
-      const loop = await Promise.all(
-        productId.map(async (productId: string, index: number) => {
-          const productSizeId = sizeId[index];
-          const productVariantId = variantId[index];
-          const quantity = qty[index];
+    const loop = await Promise.all(
+      productId.map(async (prodId: string, index: number) => {
+        const productSizeId = sizeId[index];
+        const productVariantId = variantId[index];
+        const quantity = qty[index];
 
-          const productResult = await findDetails(productId);
-          const sizeResult = await findOneSize(productSizeId);
-          const variantResult = await findOneVariant(productVariantId);
+        let existingCart;
+        try {
+          existingCart = await findCartDetails(
+            prodId,
+            userId,
+            productSizeId,
+            productVariantId
+          );
+        } catch (err) {
+          throw new Error("Error checking existing cart");
+        }
+
+        if (
+          existingCart &&
+          Number(existingCart.sizeId) === Number(productSizeId) &&
+          Number(existingCart.variantId) === Number(productVariantId)
+        ) {
+          const newQty = Number(existingCart.qty) + quantity;
+
+          let productResult, sizeResult, variantResult;
+          try {
+            [productResult, sizeResult, variantResult] = await Promise.all([
+              findDetails(prodId),
+              findOneSize(productSizeId),
+              findOneVariant(productVariantId),
+            ]);
+          } catch (err) {
+            throw new Error("Error fetching product/size/variant details");
+          }
+
+          if (!productResult || !sizeResult || !variantResult) {
+            throw new Error("Product, size, or variant not found");
+          }
+
+          const newSubtotal =
+            (productResult[0].price +
+              sizeResult[0].additionalPrice +
+              variantResult[0].additionalPrice) *
+            newQty;
+
+          const updates: ICartUpdateBody = {
+            quantity: newQty,
+            subtotal: newSubtotal,
+          };
+
+          try {
+            const updatedCart = await update(existingCart.id, updates);
+            return updatedCart;
+          } catch (err) {
+            throw new Error("Failed to update cart");
+          }
+        } else {
+          let productResult, sizeResult, variantResult;
+          try {
+            [productResult, sizeResult, variantResult] = await Promise.all([
+              findDetails(prodId),
+              findOneSize(productSizeId),
+              findOneVariant(productVariantId),
+            ]);
+          } catch (err) {
+            throw new Error("Error fetching product/size/variant details");
+          }
 
           if (!productResult || !sizeResult || !variantResult) {
             throw new Error("Product, size, or variant not found");
@@ -125,51 +181,41 @@ export const insertCart = async (
 
           const cartData = {
             userId,
-            productId,
+            productId: prodId,
             quantity,
             productSizeId,
             productVariantId,
             subtotal,
           };
 
-          const cart = await insert(cartData);
-          return cart;
-        })
-      );
+          try {
+            const newCart = await insert(cartData);
+            return newCart;
+          } catch (err) {
+            throw new Error("Failed to insert new cart");
+          }
+        }
+      })
+    );
 
-      await client.query("COMMIT");
+    await client.query("COMMIT");
 
-      return res.status(201).json({
-        success: true,
-        message: "Cart items added successfully",
-        results: loop,
-      });
-    } catch (error) {
-      await client.query("ROLLBACK");
-      const err = error as IErrResponse;
-      console.error(err);
-      return res.status(500).json({
-        success: false,
-        message: "Error inserting cart items",
-        err: err.message,
-      });
-    } finally {
-      client.release();
-    }
+    return res.status(201).json({
+      success: true,
+      message: "Cart items added successfully",
+      results: loop,
+    });
   } catch (error) {
+    await client.query("ROLLBACK");
     const err = error as IErrResponse;
-    console.error(err);
-    if (err.code === "23502") {
-      return res.status(400).json({
-        success: false,
-        message: `${err.column} Cannot be empty`,
-      });
-    } else {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid input format or processing error",
-      });
-    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Error inserting or updating cart items",
+      err: err.message,
+    });
+  } finally {
+    client.release();
   }
 };
 

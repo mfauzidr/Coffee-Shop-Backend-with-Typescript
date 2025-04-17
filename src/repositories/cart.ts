@@ -83,14 +83,30 @@ export const findCartById = async (id: number): Promise<ICart> => {
   return rows[0];
 };
 
-export const findCartByProduct = async (uuid: string): Promise<ICart> => {
+export const findCartDetails = async (
+  productId: string,
+  userId: string,
+  sizeId: number,
+  variantId: number
+): Promise<ICart> => {
   const query = `
-    SELECT
-    *
-    FROM "cart" "c"
-    WHERE "productId" = $1
-    `;
-  const values: any[] = [uuid];
+    SELECT 
+      "id",
+      "productSizeId" as "sizeId",
+      "productVariantId" as "variantId",
+      "quantity" as "qty",
+      "createdAt",
+      "updatedAt",
+      "subtotal",
+      "userId",
+      "productId"
+    FROM "cart"
+    WHERE "userId" = $1
+    AND "productId" = $2
+    AND "productSizeId" = $3
+    AND "productVariantId" = $4
+  `;
+  const values: any[] = [userId, productId, sizeId, variantId];
   const { rows } = await db.query(query, values);
   return rows[0];
 };
@@ -136,12 +152,7 @@ export const update = async (id: number, data: any): Promise<ICart> => {
         RETURNING *
     `;
 
-  console.log(query);
-
   values.push(id);
-
-  console.log(values);
-
   const { rows } = await db.query(query, values);
   return rows[0];
 };
