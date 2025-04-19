@@ -160,13 +160,6 @@ export const createProduct = async (
   } catch (error) {
     const err = error as IErrResponse;
 
-    // if (req.file) {
-    //   const filePath = path.join(__dirname, '..', 'public', 'imgs', req.file.filename);
-    //   fs.unlink(filePath, (unlinkErr) => {
-    //     if (unlinkErr) console.error('Error deleting file:', unlinkErr);
-    //   });
-    // }
-
     if (err.code === "23505") {
       return res.status(400).json({
         success: false,
@@ -234,12 +227,6 @@ export const updateProduct = async (
     });
   } catch (error) {
     const err = error as IErrResponse;
-    // if (req.file) {
-    //   const filePath = path.join(__dirname, '..', 'public', 'imgs', req.file.filename);
-    //   fs.unlink(filePath, (unlinkErr) => {
-    //     if (unlinkErr) console.error('Error deleting file:', unlinkErr);
-    //   });
-    // }
 
     if (err instanceof multer.MulterError) {
       if (err.message === "Incorrect File") {

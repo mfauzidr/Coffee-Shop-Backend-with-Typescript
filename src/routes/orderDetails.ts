@@ -1,16 +1,19 @@
-import { Router } from "express"
-import { createOrderDetails, deleteOrderDetails, getAllOrderDetails, getDetailOrderDetails } from "../handlers/orderDetails"
+import { Router } from "express";
+import {
+  createOrderDetails,
+  deleteOrderDetails,
+  getAllOrderDetails,
+  getDetailOrderDetails,
+} from "../handlers/orderDetails";
 
-const orderDetailsRouter = Router()
+const orderDetailsRouter = Router();
 
-orderDetailsRouter.get('/', getAllOrderDetails)
+orderDetailsRouter.get("/", getAllOrderDetails);
 
-orderDetailsRouter.get('/:id', getDetailOrderDetails)
+orderDetailsRouter.get("/:id", getDetailOrderDetails);
 
-orderDetailsRouter.post('/', createOrderDetails)
+orderDetailsRouter.post("/", createOrderDetails);
 
-// orderDetailsRouter.patch('/:id', updateOrderDetails)
+orderDetailsRouter.delete("/:id", deleteOrderDetails);
 
-orderDetailsRouter.delete('/:id', deleteOrderDetails)
-
-export default orderDetailsRouter
+export default orderDetailsRouter;

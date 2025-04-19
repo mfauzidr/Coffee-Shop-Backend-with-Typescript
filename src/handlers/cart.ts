@@ -173,6 +173,13 @@ export const insertCart = async (
             throw new Error("Product, size, or variant not found");
           }
 
+          console.log(
+            "size:",
+            sizeResult[0].additionalPrice,
+            ", variant:",
+            variantResult[0].additionalPrice
+          );
+
           const subtotal =
             (productResult[0].price +
               sizeResult[0].additionalPrice +
