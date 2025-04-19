@@ -22,7 +22,7 @@ const configs: CorsOptions = {
     "https://react-ts-cosho.vercel.app",
     "http://localhost:8080",
   ],
-  methods: ["POST", "PATCH"],
+  methods: ["POST", "PATCH", "DELETE"],
   allowedHeaders: ["Authorization", "x-headers", "Content-Type"],
 };
 app.use(cors(configs));

@@ -62,25 +62,32 @@ export const findDetails = async (uuid: string): Promise<IOrders[]> => {
 export const insert = async (
   data: Partial<IOrdersBody>
 ): Promise<IOrders[]> => {
-  const columns: string[] = [];
+  const columns: string[] = ['"status"'];
   const values: any[] = ["On-Process"];
+  if (data.userId) {
+    columns.push('"userId"');
+    values.push(data.userId);
+  }
 
   for (const [key, value] of Object.entries(data)) {
-    values.push(value);
-    columns.push(`"${key}"`);
+    if (key !== "userId") {
+      values.push(value);
+      columns.push(`"${key}"`);
+    }
   }
 
   const insertedValues: string = values
     .map((_, index) => `$${index + 1}`)
     .join(", ");
 
+  console.log("Columns:", columns);
+  console.log("VALUES:", values);
+
   const query = `
     INSERT INTO "orders"
-    (status, ${columns.join(", ")}, "userId")
+    (${columns.join(", ")}, "orderNumber")
     VALUES
-    ($1, ${insertedValues.substring(
-      insertedValues.indexOf(",") + 2
-    )}, generate_order_number())
+    (${insertedValues}, generate_order_number())
     RETURNING *
   `;
 

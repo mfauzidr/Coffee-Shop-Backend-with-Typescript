@@ -140,8 +140,6 @@ export const createOrders = async (
     });
   }
 
-  console.log(productId, sizeId, variantId, qty);
-
   if (
     !Array.isArray(productId) ||
     !Array.isArray(sizeId) ||
@@ -193,28 +191,16 @@ export const createOrders = async (
           const sizeResult = await findOneSize(productSizeId);
           const variantResult = await findOneVariant(productVariantId);
 
-          console.log(productResult, sizeResult, variantResult);
-
-          console.log(
-            productResult[0].price,
-            sizeResult[0].additionalPrice,
-            variantResult[0].additionalPrice,
-            quantity
-          );
-
           subtotal =
             (productResult[0].price +
               sizeResult[0].additionalPrice +
               variantResult[0].additionalPrice) *
             quantity;
-
-          console.log(subtotal);
         })
       );
 
-      const data: Partial<IOrders> = {};
+      const data: Partial<IOrders> = { subtotal };
 
-      console.log(subtotal);
       const newOrder = await update(order[0].uuid, data);
       await client.query("COMMIT");
 

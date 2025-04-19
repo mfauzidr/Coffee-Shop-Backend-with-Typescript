@@ -78,6 +78,7 @@ export const update = async (
     columns.push(`"${item}" = $${values.length}`);
   }
 
+  console.log("Columns:", columns.join(", "));
   const query = `
         UPDATE "orderDetails"
         SET ${columns.join(", ")}
