@@ -11,7 +11,7 @@ export const findAll = async (): Promise<IOrderDetails[]> => {
     "pv"."name" AS "variant",
     "od"."quantity"
     FROM "orderDetails" "od"
-    JOIN "products" "p" ON "od"."productId" = "p"."id"
+    JOIN "products" "p" ON "od"."productId" = "p"."uuid"
     JOIN "productSize" "ps" ON "od"."productSizeId" = "ps"."id"
     JOIN "productVariant" "pv" ON "od"."productVariantId" = "pv"."id"
     JOIN "orders" "o" ON "od"."orderId" = "o"."id"
@@ -30,7 +30,7 @@ export const findDetails = async (id: number): Promise<IOrderDetails> => {
     "pv"."name" AS "variant",
     "od"."quantity"
     FROM "orderDetails" "od"
-    JOIN "products" "p" ON "od"."productId" = "p"."id"
+    JOIN "products" "p" ON "od"."productId" = "p"."uuid"
     JOIN "productSize" "ps" ON "od"."productSizeId" = "ps"."id"
     JOIN "productVariant" "pv" ON "od"."productVariantId" = "pv"."id"
     JOIN "orders" "o" ON "od"."orderId" = "o"."id"
@@ -78,7 +78,6 @@ export const update = async (
     columns.push(`"${item}" = $${values.length}`);
   }
 
-  console.log("Columns:", columns.join(", "));
   const query = `
         UPDATE "orderDetails"
         SET ${columns.join(", ")}

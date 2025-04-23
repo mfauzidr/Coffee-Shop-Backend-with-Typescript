@@ -84,7 +84,6 @@ export const getDetailOrders = async (
   const { uuid } = req.params;
   try {
     const orders = await findDetails(uuid as string);
-    console.log(orders);
 
     if (orders.length < 1) {
       return res.status(404).json({
@@ -124,9 +123,7 @@ export const createOrders = async (
 
   try {
     productId =
-      typeof productId === "string"
-        ? productId.split(",").map(Number)
-        : productId;
+      typeof productId === "string" ? productId.split(",") : productId;
     sizeId =
       typeof sizeId === "string" ? sizeId.split(",").map(Number) : sizeId;
     variantId =
@@ -169,7 +166,7 @@ export const createOrders = async (
       let subtotal = 0;
 
       const loop = await Promise.all(
-        productId.map(async (productId: number, index: number) => {
+        productId.map(async (productId: string, index: number) => {
           const orderId = order[0].id;
           const productSizeId = sizeId[index];
           const productVariantId = variantId[index];
@@ -183,19 +180,19 @@ export const createOrders = async (
             quantity,
           };
 
-          console.log(`Inserting order detail: ${JSON.stringify(detailData)}`);
-
           await insertDetails(detailData);
 
           const productResult = await findOneById(productId);
           const sizeResult = await findOneSize(productSizeId);
           const variantResult = await findOneVariant(productVariantId);
 
-          subtotal =
+          const total =
             (productResult[0].price +
               sizeResult[0].additionalPrice +
               variantResult[0].additionalPrice) *
             quantity;
+
+          subtotal += total + total * 0.1;
         })
       );
 

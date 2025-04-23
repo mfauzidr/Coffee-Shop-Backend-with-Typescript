@@ -1,27 +1,27 @@
 export interface IOrders extends IOrdersBody {
-  id: number
-  uuid: string
-  orderNumber: string
-  subtotal: number
-  promoId?: number
-  taxAmount?: number
-  createdAt: Date
-  updatedAt: Date
+  id: number;
+  uuid: string;
+  orderNumber: string;
+  subtotal: number;
+  promoId?: number;
+  taxAmount?: number;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface IOrdersParams {
-  uuid: string
+  uuid: string;
 }
 
 export interface IOrdersQueryParams {
-  userId?: string
-  orderNumber?: string
-  page?: string
-  limit?: string
+  userId?: string;
+  orderNumber?: string;
+  page?: string;
+  limit?: string;
 }
 
 export interface IOrdersBody {
-  userId: number;
+  userId: string;
   fullName: string;
   email: string;
   deliveryAddress: string;
@@ -29,7 +29,7 @@ export interface IOrdersBody {
 }
 
 export interface IOrderDetailsBody extends IOrdersBody {
-  productId: string | number[];
+  productId: string | string[];
   sizeId: string | number[];
   variantId: string | number[];
   qty: string | number[];

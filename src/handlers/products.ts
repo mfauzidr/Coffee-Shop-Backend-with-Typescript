@@ -213,7 +213,6 @@ export const updateProduct = async (
     if (product.length === 0) {
       throw new Error("Not Found");
     }
-    console.log(product);
     if (product) {
       return res.json({
         success: true,
@@ -300,10 +299,10 @@ export const getOneById = async (
   req: Request<IProducts>,
   res: Response<IProductsResponse>
 ): Promise<Response> => {
-  const { id } = req.params;
+  const { uuid } = req.params;
 
   try {
-    const product = await findOneById(id);
+    const product = await findOneById(uuid);
     if (product.length === 0) {
       throw new Error("Not Found");
     }

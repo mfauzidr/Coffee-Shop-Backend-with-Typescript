@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  deleteAllCarts,
   deleteCarts,
   getAllCartItems,
   insertCart,
@@ -20,6 +21,11 @@ cartRouter.delete(
   "/delete/:id",
   authMiddleware(["admin", "customer"]),
   deleteCarts
+);
+cartRouter.delete(
+  "/deleteAll/:userId",
+  authMiddleware(["admin", "customer"]),
+  deleteAllCarts
 );
 
 export default cartRouter;

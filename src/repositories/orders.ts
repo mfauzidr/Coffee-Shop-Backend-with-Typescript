@@ -80,9 +80,6 @@ export const insert = async (
     .map((_, index) => `$${index + 1}`)
     .join(", ");
 
-  console.log("Columns:", columns);
-  console.log("VALUES:", values);
-
   const query = `
     INSERT INTO "orders"
     (${columns.join(", ")}, "orderNumber")
@@ -113,9 +110,6 @@ export const update = async (
     WHERE "uuid" = $1
     RETURNING *
   `;
-
-  console.log("Values:", values);
-  console.log("Query:", query);
 
   const result: QueryResult<IOrders> = await db.query(query, values);
   return result.rows;

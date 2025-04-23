@@ -14,11 +14,14 @@ export const findAll = async ({
   const query = `
     SELECT
     "c"."id",
+    "p"."uuid" AS "productId",
     "p"."name" AS "productName",
     "p"."image",
     "quantity",
     "ps"."size",
+    "ps"."id" AS "sizeId",
     "pv"."name" AS "variant",
+    "pv"."id" AS "variantId",
     "c"."subtotal"
     FROM "cart" "c"
     JOIN "users" "u" on "c"."userId" = "u"."uuid"
@@ -43,11 +46,14 @@ export const findAllByUid = async ({
   const query = `
     SELECT
     "c"."id",
+    "p"."uuid" AS "productId",
     "p"."name" AS "productName",
     "p"."image",
     "quantity",
     "ps"."size",
+    "ps"."id" AS "sizeId",
     "pv"."name" AS "variant",
+    "pv"."id" AS "variantId",
     "c"."subtotal"
     FROM "cart" "c"
     JOIN "users" "u" on "c"."userId" = "u"."uuid"
@@ -55,7 +61,7 @@ export const findAllByUid = async ({
     JOIN "productSize" "ps" ON "c"."productSizeId" = "ps"."id"
     JOIN "productVariant" "pv" ON "c"."productVariantId" = "pv"."id"
     ${clause}
-    ORDER BY COALESCE("c"."updatedAt", "c"."createdAt") DESC;
+    ORDER BY COALESCE("c"."createdAt", "c"."updatedAt") DESC;
 
     `;
   const result: QueryResult<ICart> = await db.query(query, values);
@@ -161,6 +167,15 @@ export const deleteCart = async (id: number): Promise<ICart> => {
   const query = `DELETE FROM "cart" WHERE "id" = $1
     RETURNING *`;
   const values: any[] = [id];
+  const { rows } = await db.query(query, values);
+  return rows[0];
+};
+export const deleteAllCart = async (userId: string): Promise<ICart> => {
+  const query = `DELETE FROM "cart" WHERE "userId" = $1
+    RETURNING *`;
+  const values: any[] = [userId];
+  console.log(query);
+  console.log(values);
   const { rows } = await db.query(query, values);
   return rows[0];
 };

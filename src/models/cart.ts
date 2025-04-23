@@ -23,6 +23,7 @@ export interface ICart {
 
 export interface ICartParams {
   id: number;
+  userId: string;
 }
 
 export interface ICartQueryParams {

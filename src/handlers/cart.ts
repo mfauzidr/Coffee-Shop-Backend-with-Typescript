@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import {
+  deleteAllCart,
   deleteCart,
   findAll,
   findAllByUid,
@@ -173,13 +174,6 @@ export const insertCart = async (
             throw new Error("Product, size, or variant not found");
           }
 
-          console.log(
-            "size:",
-            sizeResult[0].additionalPrice,
-            ", variant:",
-            variantResult[0].additionalPrice
-          );
-
           const subtotal =
             (productResult[0].price +
               sizeResult[0].additionalPrice +
@@ -309,6 +303,33 @@ export const deleteCarts = async (
 
   try {
     const cart = await deleteCart(id);
+    if (!cart) {
+      return res.status(404).json({
+        success: false,
+        message: "cart not found",
+      });
+    }
+    return res.json({
+      success: true,
+      message: "Delete success",
+    });
+  } catch (error) {
+    const err = error as IErrResponse;
+    console.error(JSON.stringify(error));
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+export const deleteAllCarts = async (
+  req: Request<ICartParams>,
+  res: Response<ICartResponse>
+) => {
+  const { userId } = req.params;
+
+  try {
+    const cart = await deleteAllCart(userId);
     if (!cart) {
       return res.status(404).json({
         success: false,

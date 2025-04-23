@@ -241,12 +241,12 @@ export const deleteProduct = async (uuid: string): Promise<IProducts[]> => {
   return result.rows;
 };
 
-export const findOneById = async (id: number): Promise<IProducts[]> => {
+export const findOneById = async (uuid: string): Promise<IProducts[]> => {
   const query = `
     SELECT * from "products"
-    WHERE id = $1;
+    WHERE uuid = $1;
     `;
-  const values: number[] = [id];
+  const values: string[] = [uuid];
   const { rows } = await db.query(query, values);
   return rows;
 };
