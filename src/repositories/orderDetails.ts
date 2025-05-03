@@ -1,3 +1,4 @@
+import { QueryResult } from "pg";
 import db from "../config/pg";
 import { IOrderDetails } from "../models/orderDetails";
 
@@ -21,7 +22,7 @@ export const findAll = async (): Promise<IOrderDetails[]> => {
   return rows;
 };
 
-export const findDetails = async (id: number): Promise<IOrderDetails> => {
+export const findDetails = async (id: number): Promise<IOrderDetails[]> => {
   const query = `
     SELECT
     "o"."orderNumber",
@@ -34,11 +35,11 @@ export const findDetails = async (id: number): Promise<IOrderDetails> => {
     JOIN "productSize" "ps" ON "od"."productSizeId" = "ps"."id"
     JOIN "productVariant" "pv" ON "od"."productVariantId" = "pv"."id"
     JOIN "orders" "o" ON "od"."orderId" = "o"."id"
-    WHERE "od"."id" = $1
+    WHERE "od"."orderId" = $1
     `;
-  const values: any[] = [id];
-  const { rows } = await db.query(query, values);
-  return rows[0];
+  const values: number[] = [id];
+  const results: QueryResult<IOrderDetails> = await db.query(query, values);
+  return results.rows;
 };
 
 export const insert = async (data: any): Promise<IOrderDetails> => {

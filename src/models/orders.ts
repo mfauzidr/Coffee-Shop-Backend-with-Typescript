@@ -24,6 +24,7 @@ export interface IOrdersBody {
   userId: string;
   fullName: string;
   email: string;
+  status: string;
   deliveryAddress: string;
   deliveryMethod: string;
 }

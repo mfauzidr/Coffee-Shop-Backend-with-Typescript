@@ -5,6 +5,8 @@ import {
   insert,
   deleteOrderDetail,
 } from "../repositories/orderDetails";
+import { IOrderDetails, IOrderDetailsParams } from "../models/orderDetails";
+import { IErrResponse, IOrderDetailsResponse } from "../models/response";
 
 export const getAllOrderDetails = async (
   req: Request,
@@ -19,23 +21,31 @@ export const getAllOrderDetails = async (
 };
 
 export const getDetailOrderDetails = async (
-  req: Request,
-  res: Response
-): Promise<Response> => {
-  const id = parseInt(req.params.id);
-  const orderDetails = await findDetails(id);
-  if (!orderDetails) {
-    return res.status(404).json({
+  req: Request<IOrderDetailsParams>,
+  res: Response<IOrderDetailsResponse>
+) => {
+  const { id } = req.params;
+  try {
+    let orders: IOrderDetails[];
+    orders = await findDetails(id);
+
+    if (orders.length < 1) {
+      throw new Error("no_data");
+    }
+    return res.json({
+      success: true,
+      message: "OK",
+      results: orders,
+    });
+  } catch (error) {
+    const err = error as IErrResponse;
+
+    console.log(err);
+    return res.status(500).json({
       success: false,
-      message: "orderDetails not found",
+      message: "Internal server error",
     });
   }
-
-  return res.json({
-    success: true,
-    message: "OK",
-    results: orderDetails,
-  });
 };
 
 export const createOrderDetails = async (

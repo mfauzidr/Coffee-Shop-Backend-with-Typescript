@@ -68,9 +68,7 @@ export const insertCart = async (
 
   try {
     productId =
-      typeof productId === "string"
-        ? productId.split(",").map(String)
-        : productId;
+      typeof productId === "string" ? productId.split(",") : productId;
     sizeId =
       typeof sizeId === "string" ? sizeId.split(",").map(Number) : sizeId;
     variantId =
@@ -100,6 +98,17 @@ export const insertCart = async (
   const client = await db.connect();
   try {
     await client.query("BEGIN");
+
+    if (
+      productId.length !== sizeId.length ||
+      productId.length !== variantId.length ||
+      productId.length !== qty.length
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "All input arrays must be of the same length",
+      });
+    }
 
     const loop = await Promise.all(
       productId.map(async (prodId: string, index: number) => {
@@ -221,77 +230,84 @@ export const insertCart = async (
 };
 
 export const updateCart = async (
-  req: Request<ICartParams, {}, ICartUpdateBody>,
+  req: Request<{}, {}, { updates: (ICartUpdateBody & { id: number })[] }>,
   res: Response<ICartResponse>
 ) => {
-  const { id } = req.params;
-  const { productSizeId, productVariantId, quantity } = req.body;
+  const { updates } = req.body;
 
+  console.log(req.body);
+
+  if (!Array.isArray(updates) || updates.length === 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Updates should be a non-empty array",
+    });
+  }
+
+  const client = await db.connect();
   try {
-    const existingCart = await findCartById(id);
-    if (!existingCart) {
-      return res.status(404).json({
-        success: false,
-        message: "Cart not found",
-      });
-    }
-    const updates: ICartUpdateBody = {};
+    await client.query("BEGIN");
 
-    if (productSizeId) updates.productSizeId = productSizeId;
-    if (productVariantId) updates.productVariantId = productVariantId;
-    if (quantity) updates.quantity = quantity;
+    const results = await Promise.all(
+      updates.map(async ({ id, productSizeId, productVariantId, quantity }) => {
+        const existingCart = await findCartById(id);
+        if (!existingCart) throw new Error(`Cart ID ${id} not found`);
 
-    if (productSizeId || productVariantId || quantity) {
-      const sizeToUse = productSizeId ? productSizeId : existingCart.sizeId;
-      const variantToUse = productVariantId
-        ? productVariantId
-        : existingCart.variantId;
-      const qtyToUse = quantity ? Number(quantity) : existingCart.qty;
+        const updatesData: ICartUpdateBody = {};
 
-      const productId = Array.isArray(existingCart.productId)
-        ? existingCart.productId[0]
-        : existingCart.productId;
+        if (productSizeId) updatesData.productSizeId = productSizeId;
+        if (productVariantId) updatesData.productVariantId = productVariantId;
+        if (quantity) updatesData.quantity = quantity;
 
-      const productResult = await findDetails(String(productId));
-      const sizeResult = await findOneSize(Number(sizeToUse));
-      const variantResult = await findOneVariant(Number(variantToUse));
+        const sizeToUse = productSizeId ?? existingCart.sizeId;
+        const variantToUse = productVariantId ?? existingCart.variantId;
+        const qtyToUse = quantity ?? existingCart.qty;
+        const productId = Array.isArray(existingCart.productId)
+          ? existingCart.productId[0]
+          : existingCart.productId;
 
-      if (!productResult || !sizeResult || !variantResult) {
-        return res.status(404).json({
-          success: false,
-          message: "Product, size, or variant not found",
-        });
-      }
+        const [productResult, sizeResult, variantResult] = await Promise.all([
+          findDetails(String(productId)),
+          findOneSize(Number(sizeToUse)),
+          findOneVariant(Number(variantToUse)),
+        ]);
 
-      const newSubtotal =
-        (productResult[0].price +
-          sizeResult[0].additionalPrice +
-          variantResult[0].additionalPrice) *
-        Number(qtyToUse);
+        if (!productResult || !sizeResult || !variantResult) {
+          throw new Error(`Invalid product/size/variant for cart ID ${id}`);
+        }
 
-      updates.subtotal = newSubtotal;
-    }
+        const newSubtotal =
+          (productResult[0].price +
+            sizeResult[0].additionalPrice +
+            variantResult[0].additionalPrice) *
+          Number(qtyToUse);
 
-    const updatedCart = await update(Number(id), updates);
+        updatesData.subtotal = newSubtotal;
 
-    if (!updatedCart) {
-      return res.status(404).json({
-        success: false,
-        message: "Cart not found",
-      });
-    }
+        const updatedCart = await update(id, updatesData);
+        return updatedCart;
+      })
+    );
 
-    return res.json({
+    await client.query("COMMIT");
+
+    return res.status(200).json({
       success: true,
-      message: "Update successful",
+      message: "Batch update successful",
+      results,
     });
   } catch (error) {
+    await client.query("ROLLBACK");
     const err = error as IErrResponse;
     console.error(err);
+
     return res.status(500).json({
       success: false,
-      message: "Internal Server Error",
+      message: "Batch update failed",
+      err: err.message,
     });
+  } finally {
+    client.release();
   }
 };
 

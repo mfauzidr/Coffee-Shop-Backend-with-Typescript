@@ -1,4 +1,5 @@
 import { ICart } from "./cart";
+import { IOrderDetails } from "./orderDetails";
 import { IOrders } from "./orders";
 import { IProducts } from "./products";
 import { IPromos } from "./promos";
@@ -38,6 +39,10 @@ export interface IPromosResponse extends IBasicResponse {
 
 export interface IOrderResponse extends IBasicResponse {
   results?: IOrders[];
+}
+
+export interface IOrderDetailsResponse extends IBasicResponse {
+  results?: IOrderDetails[];
 }
 
 export interface ISizeResponse extends IBasicResponse {

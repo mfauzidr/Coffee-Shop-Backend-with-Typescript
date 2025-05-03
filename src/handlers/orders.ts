@@ -83,7 +83,7 @@ export const getDetailOrders = async (
 ) => {
   const { uuid } = req.params;
   try {
-    const orders = await findDetails(uuid as string);
+    const orders = await findDetails(uuid);
 
     if (orders.length < 1) {
       return res.status(404).json({

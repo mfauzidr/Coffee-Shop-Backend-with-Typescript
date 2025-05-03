@@ -42,19 +42,18 @@ export const findAll = async ({
 export const findDetails = async (uuid: string): Promise<IOrders[]> => {
   const query = `
     SELECT
-    "o"."userId",
-    "p"."name" AS "productName",
-    "ps"."size",
-    "pv"."name" AS "variant",
-    "od"."quantity"
-    FROM "orderDetails" "od"
-    JOIN "products" "p" ON "od"."productId" = "p"."id"
-    JOIN "productSize" "ps" ON "od"."productSizeId" = "ps"."id"
-    JOIN "productVariant" "pv" ON "od"."productVariantId" = "pv"."id"
-    JOIN "orders" "o" ON "od"."orderId" = "o"."id"
-    WHERE "o"."uuid" = $1
+    "id",
+    "uuid",
+    "orderNumber",
+    "fullName",
+    "deliveryAddress",
+    "deliveryMethod",
+    "status",
+    "subtotal"
+    FROM "orders"
+    WHERE "uuid" = $1
     `;
-  const values: string[] = [uuid];
+  const values = [uuid];
   const result: QueryResult<IOrders> = await db.query(query, values);
   return result.rows;
 };

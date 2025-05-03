@@ -12,11 +12,7 @@ const cartRouter = Router();
 
 cartRouter.get("/", authMiddleware(["admin", "customer"]), getAllCartItems);
 cartRouter.post("/add", authMiddleware(["admin", "customer"]), insertCart);
-cartRouter.patch(
-  "/edit/:id",
-  authMiddleware(["admin", "customer"]),
-  updateCart
-);
+cartRouter.patch("/edit", authMiddleware(["admin", "customer"]), updateCart);
 cartRouter.delete(
   "/delete/:id",
   authMiddleware(["admin", "customer"]),
