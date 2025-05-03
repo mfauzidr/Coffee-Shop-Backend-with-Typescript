@@ -2,6 +2,7 @@ export interface IOrders extends IOrdersBody {
   id: number;
   uuid: string;
   orderNumber: string;
+  image?: string;
   subtotal: number;
   promoId?: number;
   taxAmount?: number;
@@ -22,6 +23,7 @@ export interface IOrdersQueryParams {
 
 export interface IOrdersBody {
   userId: string;
+  image?: string;
   fullName: string;
   email: string;
   status: string;

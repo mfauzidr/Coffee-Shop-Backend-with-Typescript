@@ -164,6 +164,7 @@ export const createOrders = async (
 
       const order = await insertOrder(orderData);
       let subtotal = 0;
+      let image = "";
 
       const loop = await Promise.all(
         productId.map(async (productId: string, index: number) => {
@@ -186,6 +187,10 @@ export const createOrders = async (
           const sizeResult = await findOneSize(productSizeId);
           const variantResult = await findOneVariant(productVariantId);
 
+          if (index === 0 && productResult[0]?.image) {
+            image = productResult[0].image;
+          }
+
           const total =
             (productResult[0].price +
               sizeResult[0].additionalPrice +
@@ -196,7 +201,7 @@ export const createOrders = async (
         })
       );
 
-      const data: Partial<IOrders> = { subtotal };
+      const data: Partial<IOrders> = { subtotal, image };
 
       const newOrder = await update(order[0].uuid, data);
       await client.query("COMMIT");

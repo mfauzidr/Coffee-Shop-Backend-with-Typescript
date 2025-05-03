@@ -25,6 +25,7 @@ export const findAll = async (): Promise<IOrderDetails[]> => {
 export const findDetails = async (id: number): Promise<IOrderDetails[]> => {
   const query = `
     SELECT
+    "od"."orderId",
     "o"."orderNumber",
     "p"."name" AS "productName",
     "p"."image",

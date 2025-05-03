@@ -43,6 +43,7 @@ export const findDetails = async (uuid: string): Promise<IOrders[]> => {
   const query = `
     SELECT
     "id",
+    "image",
     "uuid",
     "orderNumber",
     "fullName",
