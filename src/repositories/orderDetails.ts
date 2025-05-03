@@ -27,6 +27,7 @@ export const findDetails = async (id: number): Promise<IOrderDetails[]> => {
     SELECT
     "o"."orderNumber",
     "p"."name" AS "productName",
+    "p"."image",
     "ps"."size",
     "pv"."name" AS "variant",
     "od"."quantity"

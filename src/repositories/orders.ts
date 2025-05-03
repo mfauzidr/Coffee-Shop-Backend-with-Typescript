@@ -49,7 +49,8 @@ export const findDetails = async (uuid: string): Promise<IOrders[]> => {
     "deliveryAddress",
     "deliveryMethod",
     "status",
-    "subtotal"
+    "subtotal",
+    "createdAt" AS "date"
     FROM "orders"
     WHERE "uuid" = $1
     `;
