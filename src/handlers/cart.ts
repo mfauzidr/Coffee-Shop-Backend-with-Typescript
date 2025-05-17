@@ -235,8 +235,6 @@ export const updateCart = async (
 ) => {
   const { updates } = req.body;
 
-  console.log(req.body);
-
   if (!Array.isArray(updates) || updates.length === 0) {
     return res.status(400).json({
       success: false,

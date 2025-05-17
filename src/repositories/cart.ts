@@ -174,8 +174,6 @@ export const deleteAllCart = async (userId: string): Promise<ICart> => {
   const query = `DELETE FROM "cart" WHERE "userId" = $1
     RETURNING *`;
   const values: any[] = [userId];
-  console.log(query);
-  console.log(values);
   const { rows } = await db.query(query, values);
   return rows[0];
 };

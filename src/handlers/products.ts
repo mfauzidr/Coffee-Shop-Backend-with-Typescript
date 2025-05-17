@@ -18,6 +18,9 @@ import { IErrResponse, IProductsResponse } from "../models/response";
 import { cloudinaryUploader } from "../helper/cloudinary";
 import paginLink from "../helper/paginLink";
 import multer from "multer";
+import { createProductCategories } from "./categories";
+import { insertProductCategory } from "../repositories/categories";
+import { insertProductSize } from "../repositories/sizeAndVariants";
 
 export const getAllProducts = async (
   req: Request<{}, {}, {}, IProductsQueryParams>,
@@ -128,12 +131,48 @@ export const createProduct = async (
   res: Response<IProductsResponse>
 ): Promise<Response> => {
   try {
-    if (req.file) {
-      const imgUrl = `/imgs/${req.file.filename}`;
-      req.body.image = imgUrl;
+    if (typeof req.body.price === "string") {
+      req.body.price = parseFloat(req.body.price);
     }
-    const product = await insert(req.body);
+
+    if (typeof req.body.categoryId === "string") {
+      req.body.categoryId = parseInt(req.body.categoryId, 10);
+    }
+
+    if (typeof req.body.sizeId === "string") {
+      req.body.sizeId = parseInt(req.body.sizeId, 10);
+    }
+
+    const productData = {
+      name: req.body.name,
+      description: req.body.description,
+      price: req.body.price,
+    };
+    const product = await insert(productData);
     const productUuid = product[0].uuid;
+
+    if (req.body.categoryId) {
+      const productId = product[0].id;
+      const categoryId = req.body.categoryId;
+      const data = {
+        productId,
+        categoryId,
+      };
+      await insertProductCategory(data);
+    }
+
+    if (req.body.sizeId) {
+      const productId = product[0].id;
+      const sizeId = req.body.sizeId;
+      const data = {
+        productId,
+        sizeId,
+      };
+      await insertProductSize(data);
+    }
+
+    console.log(req.file);
+    console.log(req);
 
     if (req.file) {
       const uploadResult = await cloudinaryUploader(

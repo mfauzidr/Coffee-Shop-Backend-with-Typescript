@@ -13,3 +13,13 @@ export interface IVariants {
   createdAt: Date;
   updatedAt?: Date;
 }
+
+export interface IProductSizes {
+  productId: number;
+  sizeId: number;
+}
+
+export interface IProductSizeBody {
+  productId: number;
+  sizeId: number;
+}

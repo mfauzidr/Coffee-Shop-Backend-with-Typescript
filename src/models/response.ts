@@ -1,9 +1,10 @@
 import { ICart } from "./cart";
+import { IProductCategories } from "./categories";
 import { IOrderDetails } from "./orderDetails";
 import { IOrders } from "./orders";
 import { IProducts } from "./products";
 import { IPromos } from "./promos";
-import { ISizes, IVariants } from "./sizeAndVariants";
+import { IProductSizes, ISizes, IVariants } from "./sizeAndVariants";
 import { IUser } from "./users";
 
 interface IPaginationMeta {
@@ -18,6 +19,7 @@ interface IBasicResponse {
   success?: boolean;
   message: string;
   err?: string;
+  warning?: string;
   meta?: IPaginationMeta;
 }
 
@@ -55,6 +57,13 @@ export interface IVariantResponse extends IBasicResponse {
 
 export interface ICartResponse extends IBasicResponse {
   results?: ICart[];
+}
+
+export interface IProductCategoryResponse extends IBasicResponse {
+  results?: IProductCategories[];
+}
+export interface IProductSizeResponse extends IBasicResponse {
+  results?: IProductSizes[];
 }
 
 export interface IErrResponse {
