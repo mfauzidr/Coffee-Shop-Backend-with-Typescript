@@ -157,7 +157,6 @@ export const findDetails = async (
 ): Promise<IProducts[]> => {
   const columns: string[] = [
     "id",
-    "name",
     "image",
     "description",
     "price",
@@ -168,13 +167,18 @@ export const findDetails = async (
   const selectColumns: string[] = selectedColumns || columns;
 
   const query = `
-    SELECT ${selectColumns
+    SELECT 
+    "p"."name" as "productName",
+    ${selectColumns
       .map((col) => `"p"."${col}" AS "${col}"`)
-      .join(", ")},"c"."name" AS "category", "pr"."rate" AS "rating"
+      .join(
+        ", "
+      )},"c"."id" AS "categoryId", "pr"."rate" AS "rating","ps"."sizeId" AS "sizeId"
     FROM "products" "p"
     LEFT JOIN "productCategories" "pc" ON "p"."id" = "pc"."productId"
     LEFT JOIN "categories" "c" ON "pc"."categoryId" = "c"."id"
     LEFT JOIN "productRatings" "pr" ON "p"."id" = "pr"."productId"
+    LEFT JOIN "sizeProductRelations" "ps" ON "p"."id" = "ps"."productId"
     WHERE "p"."uuid" = $1
   `;
 
