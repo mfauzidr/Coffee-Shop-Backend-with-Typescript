@@ -68,7 +68,7 @@ export const findAll = async ({
   maxPrice = Infinity,
   sortBy = "",
   page = "1",
-  limit = "6",
+  limit = "",
 }: IProductsQueryParams): Promise<IProducts[]> => {
   const offset: number = (parseInt(page) - 1) * parseInt(limit);
 
