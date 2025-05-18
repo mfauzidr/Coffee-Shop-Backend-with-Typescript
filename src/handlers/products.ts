@@ -51,7 +51,7 @@ export const getAllProducts = async (
       throw new Error("no_data");
     }
 
-    const limit = req.query.limit;
+    const limit = req.query.limit || "6";
     const count = await totalCount(query);
     const currentPage = parseInt((req.query.page as string) || "1");
     const totalData = count;
