@@ -227,7 +227,7 @@ export const updateProduct = async (
 ): Promise<Response> => {
   const { uuid } = req.params;
   try {
-    const data: Partial<IProductsBody> = {
+    const data: Omit<IProductsBody, "categoryId" | "sizeId"> = {
       ...req.body,
     };
 
