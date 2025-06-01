@@ -18,7 +18,6 @@ import { IErrResponse, IProductsResponse } from "../models/response";
 import { cloudinaryUploader } from "../helper/cloudinary";
 import paginLink from "../helper/paginLink";
 import multer from "multer";
-import { createProductCategories } from "./categories";
 import { insertProductCategory } from "../repositories/categories";
 import { insertProductSize } from "../repositories/sizeAndVariants";
 
