@@ -28,7 +28,7 @@ const corsConfig: CorsOptions = {
 };
 app.use(cors(corsConfig));
 
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static("./public"));
 
 app.get("/", (req: Request, res: Response) => {
   res.json({

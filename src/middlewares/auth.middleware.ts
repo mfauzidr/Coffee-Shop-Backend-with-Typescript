@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express-serve-static-core";
+import { NextFunction, Request, Response } from "express";
 import jwt, { SignOptions } from "jsonwebtoken";
 
 import { AppParams } from "../models/params";
@@ -28,7 +28,7 @@ export const authMiddleware =
     const token = bearerToken.split(" ")[1];
     jwt.verify(
       token,
-      <string>process.env.JWT_SECRET,
+      process.env.JWT_SECRET as string,
       jwtOptions,
       (err, payload) => {
         if (err) {
@@ -37,15 +37,13 @@ export const authMiddleware =
             err: err.name,
           });
         }
-        if (role) {
-          if (!role.includes((payload as IPayload).role as string)) {
-            return res.status(403).json({
-              message: "Forbidden",
-              err: "Forbidden Access",
-            });
-          }
+        if (role && !role.includes((payload as IPayload).role as string)) {
+          return res.status(403).json({
+            message: "Forbidden",
+            err: "Forbidden Access",
+          });
         }
-        req.userPayload = payload;
+        req.userPayload = payload as IPayload;
         next();
       }
     );
