@@ -2,12 +2,13 @@ import express, { Request, Response } from "express";
 import * as dotenv from "dotenv";
 import morgan from "morgan";
 import cors, { CorsOptions } from "cors";
-import path from "path";
 import router from "./src/routes";
+import fs from "fs";
 
-dotenv.config({
-  path: process.env.NODE_ENV === "production" ? ".env.production" : ".env",
-});
+const envPath =
+  process.env.NODE_ENV === "production" ? "./.env.production" : "./.env";
+
+dotenv.config({ path: envPath, override: true });
 
 const app = express();
 
@@ -45,7 +46,7 @@ app.listen(PORT, () => {
   console.log(
     `✅ Server running on port ${PORT} in ${
       process.env.NODE_ENV || "development"
-    } mode`
+    } mode — DB: ${process.env.DB_HOST || "not specified"}`
   );
 });
 
