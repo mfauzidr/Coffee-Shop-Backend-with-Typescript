@@ -72,7 +72,7 @@ export const getAllProducts = async (
     if (err.message === "no_data") {
       return res.status(404).json({
         success: false,
-        message: "Data not found",
+        message: "Products not found",
       });
     }
 

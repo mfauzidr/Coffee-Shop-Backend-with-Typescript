@@ -22,8 +22,6 @@ export const totalCount = async ({
     FROM "products" "p"
     LEFT JOIN "productCategories" "pc" ON "pc"."productId" = "p"."id"
     LEFT JOIN "categories" "c" ON "pc"."categoryId" = "c"."id"
-    LEFT JOIN "productPromos" "pp" ON "pp"."productId" = "p"."id"
-    LEFT JOIN "promos" "pr" ON "pp"."promoId" = "pr"."id"
   `;
 
   let values: (string | number)[] = [];
@@ -132,7 +130,6 @@ export const findAll = async ({
       "p"."description",
       "p"."image",
       "p"."price",
-      "pr"."name" AS "promo",
       "p"."discountPrice",
       "p"."uuid",
       "p"."createdAt",
@@ -140,8 +137,6 @@ export const findAll = async ({
     FROM "products" "p"
     LEFT JOIN "productCategories" "pc" ON "pc"."productId" = "p"."id"
     LEFT JOIN "categories" "c" ON "pc"."categoryId" = "c"."id"
-    LEFT JOIN "productPromos" "pp" ON "pp"."productId" = "p"."id"
-    LEFT JOIN "promos" "pr" ON "pp"."promoId" = "pr"."id"
     ${whereQuery}
     ${orderByClause}
     LIMIT ${limit} OFFSET ${offset}

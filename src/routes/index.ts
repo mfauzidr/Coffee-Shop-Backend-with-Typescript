@@ -22,6 +22,6 @@ router.use("/variant", variantRouter);
 router.use("/categories", categoryRouter);
 router.use("/cart", cartRouter);
 
-router.use("/", authRouter);
+router.use("/auth", authRouter);
 
 export default router;

@@ -1,14 +1,13 @@
-import express, { Request, Response } from "express";
 import * as dotenv from "dotenv";
-import morgan from "morgan";
-import cors, { CorsOptions } from "cors";
-import router from "./src/routes";
-import fs from "fs";
-
 const envPath =
   process.env.NODE_ENV === "production" ? "./.env.production" : "./.env";
 
 dotenv.config({ path: envPath, override: true });
+
+import express, { Request, Response } from "express";
+import morgan from "morgan";
+import cors, { CorsOptions } from "cors";
+import router from "./src/routes";
 
 const app = express();
 
