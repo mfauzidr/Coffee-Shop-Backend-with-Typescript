@@ -61,7 +61,7 @@ export const findAllByUid = async ({
     JOIN "productSize" "ps" ON "c"."productSizeId" = "ps"."id"
     JOIN "productVariant" "pv" ON "c"."productVariantId" = "pv"."id"
     ${clause}
-    ORDER BY COALESCE("c"."createdAt", "c"."updatedAt") DESC;
+    ORDER BY "c"."createdAt" DESC;
 
     `;
   const result: QueryResult<ICart> = await db.query(query, values);
