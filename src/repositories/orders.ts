@@ -2,42 +2,42 @@ import { QueryResult } from "pg";
 import db from "../config/pg";
 import { IOrders, IOrdersBody, IOrdersQueryParams } from "../models/orders";
 
-export const totalCount = async ({ userId = "" }): Promise<number> => {
-  let query = `
-    SELECT COUNT(*) as total
-    FROM "orders"
-  `;
-  let values: string[] = [];
+// export const totalCount = async ({ userId = "" }): Promise<number> => {
+//   let query = `
+//     SELECT COUNT(*) as total
+//     FROM "orders"
+//   `;
+//   let values: string[] = [];
 
-  if (userId) {
-    query += ` WHERE "userId" ILIKE $1`;
-    values.push(`%${userId}%`);
-  }
+//   if (userId) {
+//     query += ` WHERE "userId" ILIKE $1`;
+//     values.push(`%${userId}%`);
+//   }
 
-  const result: QueryResult<{ total: number }> = await db.query(query, values);
-  return result.rows[0].total;
-};
+//   const result: QueryResult<{ total: number }> = await db.query(query, values);
+//   return result.rows[0].total;
+// };
 
-export const findAll = async ({
-  userId = "",
-  page = "1",
-  limit = "3",
-}: IOrdersQueryParams): Promise<IOrders[]> => {
-  const offset: number = (parseInt(page) - 1) * parseInt(limit);
+// export const findAll = async ({
+//   userId = "",
+//   page = "1",
+//   limit = "3",
+// }: IOrdersQueryParams): Promise<IOrders[]> => {
+//   const offset: number = (parseInt(page) - 1) * parseInt(limit);
 
-  let findOrderQuery = "";
-  let values: string[] = [];
-  if (userId) {
-    findOrderQuery = `WHERE "userId" ILIKE $1`;
-    values.push(`%${userId}%`);
-  }
-  const query = `SELECT * FROM "orders"
-  ${findOrderQuery}
-  LIMIT ${limit} OFFSET ${offset}
-  `;
-  const result: QueryResult<IOrders> = await db.query(query, values);
-  return result.rows;
-};
+//   let findOrderQuery = "";
+//   let values: string[] = [];
+//   if (userId) {
+//     findOrderQuery = `WHERE "userId" ILIKE $1`;
+//     values.push(`%${userId}%`);
+//   }
+//   const query = `SELECT * FROM "orders"
+//   ${findOrderQuery}
+//   LIMIT ${limit} OFFSET ${offset}
+//   `;
+//   const result: QueryResult<IOrders> = await db.query(query, values);
+//   return result.rows;
+// };
 
 export const findDetails = async (uuid: string): Promise<IOrders[]> => {
   const query = `
@@ -123,45 +123,135 @@ export const deleteOrder = async (uuid: string): Promise<IOrders[]> => {
   return result.rows;
 };
 
-export const totalCountByUid = async ({ userId = "" }): Promise<number> => {
-  let values: string[] = [];
-
-  let clause = "";
-  if (userId) {
-    clause += ` WHERE "userId" = $1`;
-    values.push(`${userId}`);
-  }
+export const totalCount = async ({
+  userId = "",
+  orderNumber = "",
+  status = "",
+  deliveryMethod = "",
+  startDate = "",
+  endDate = "",
+}: IOrdersQueryParams): Promise<number> => {
   let query = `
     SELECT COUNT(*) as total
     FROM "orders"
-    ${clause}
   `;
+
+  let values: string[] = [];
+  let conditions: string[] = [];
+
+  if (userId) {
+    conditions.push(`"userId" = $${values.length + 1}`);
+    values.push(userId);
+  }
+  if (orderNumber) {
+    conditions.push(`"orderNumber" ILIKE $${values.length + 1}`);
+    values.push(`%${orderNumber}%`);
+  }
+  if (status) {
+    conditions.push(`"status" = $${values.length + 1}`);
+    values.push(status);
+  }
+  if (deliveryMethod) {
+    conditions.push(`"deliveryMethod" = $${values.length + 1}`);
+    values.push(deliveryMethod);
+  }
+  if (startDate && endDate) {
+    if (startDate === endDate) {
+      conditions.push(`"createdAt"::date = $${values.length + 1}`);
+      values.push(startDate);
+    } else {
+      conditions.push(
+        `"createdAt"::date BETWEEN $${values.length + 1} AND $${
+          values.length + 2
+        }`
+      );
+      values.push(startDate, endDate);
+    }
+  }
+
+  if (conditions.length > 0) {
+    query += `WHERE ` + conditions.join(" AND ");
+  }
 
   const result: QueryResult<{ total: number }> = await db.query(query, values);
   return result.rows[0].total;
 };
 
-export const findAllByUid = async ({
+export const findAll = async ({
   userId = "",
+  status = "",
+  deliveryMethod = "",
+  startDate = "",
+  endDate = "",
+  orderNumber = "",
+  sortBy = "",
   page = "1",
   limit = "6",
 }: IOrdersQueryParams): Promise<IOrders[]> => {
   const offset: number = (parseInt(page) - 1) * parseInt(limit);
 
   let values: string[] = [];
-  let clause = "";
+  let conditions: string[] = [];
+  let whereQuery: string = "";
+
   if (userId) {
-    clause += ` WHERE "userId" = $1`;
-    values.push(`${userId}`);
+    conditions.push(`"userId" = $${values.length + 1}`);
+    values.push(userId);
   }
+  if (orderNumber) {
+    conditions.push(`"orderNumber" ILIKE $${values.length + 1}`);
+    values.push(`%${orderNumber}%`);
+  }
+  if (status) {
+    conditions.push(`"status" = $${values.length + 1}`);
+    values.push(status);
+  }
+  if (deliveryMethod) {
+    conditions.push(`"deliveryMethod" = $${values.length + 1}`);
+    values.push(deliveryMethod);
+  }
+  if (startDate && endDate) {
+    if (startDate === endDate) {
+      conditions.push(`"createdAt"::date = $${values.length + 1}`);
+      values.push(startDate);
+    } else {
+      conditions.push(
+        `"createdAt"::date BETWEEN $${values.length + 1} AND $${
+          values.length + 2
+        }`
+      );
+      values.push(startDate, endDate);
+    }
+  }
+
+  if (conditions.length > 0) {
+    whereQuery += `WHERE ` + conditions.join(" AND ");
+  }
+
+  let orderByClause: string = `ORDER BY "createdAt" DESC`;
+
+  switch (sortBy) {
+    case "Latest":
+      orderByClause = `ORDER BY "createdAt" DESC`;
+      break;
+    case "Oldest":
+      orderByClause = `ORDER BY "createdAt" ASC`;
+      break;
+    case "Price-ASC":
+      orderByClause = `ORDER BY "subtotal" ASC`;
+      break;
+    case "Price-DESC":
+      orderByClause = `ORDER BY "subtotal" DESC`;
+      break;
+  }
+
   const query = `
     SELECT *
     FROM "orders"
-    ${clause}
-    ORDER BY "createdAt" DESC
-    LIMIT $2 OFFSET $3
+    ${whereQuery}
+    ${orderByClause}
+    LIMIT ${limit} OFFSET ${offset}
   `;
-  values.push(`${limit}`, `${offset}`);
 
   const result: QueryResult<IOrders> = await db.query(query, values);
   return result.rows;

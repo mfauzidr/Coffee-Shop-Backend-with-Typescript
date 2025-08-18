@@ -17,8 +17,13 @@ export interface IOrdersParams {
 export interface IOrdersQueryParams {
   userId?: string;
   orderNumber?: string;
+  status?: string;
+  deliveryMethod?: string;
+  startDate?: string;
+  endDate?: string;
   page?: string;
   limit?: string;
+  sortBy?: string;
 }
 
 export interface IOrdersBody {

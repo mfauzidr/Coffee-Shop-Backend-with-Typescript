@@ -6,8 +6,8 @@ import {
   update,
   deleteOrder,
   totalCount,
-  findAllByUid,
-  totalCountByUid,
+  // findAllByUid,
+  // totalCountByUid,
 } from "../repositories/orders";
 import {
   insert as insertDetails,
@@ -33,21 +33,24 @@ export const getAllOrders = async (
   try {
     let orders: IOrders[];
     let count: number;
-    if (req.query.userId) {
-      orders = await findAllByUid(req.query);
-      count = await totalCountByUid(req.query);
-    } else {
-      orders = await findAll(req.query);
-      count = await totalCount(req.query);
-    }
+    // if (req.query.userId) {
+    //   orders = await findAllByUid(req.query);
+    //   count = await totalCountByUid(req.query);
+    // } else {
+    //   orders = await findAll(req.query);
+    //   count = await totalCount(req.query);
+    // }
+    orders = await findAll(req.query);
 
     if (orders.length < 1) {
       throw new Error("no_data");
     }
-    const limit = req.query.limit;
+    const limit = req.query.limit || 6;
+    count = await totalCount(req.query);
     const currentPage = parseInt((req.query.page as string) || "1");
     const totalData = count;
     const totalPage = Math.ceil(totalData / parseInt(limit as string));
+    console.log(totalPage);
 
     return res.json({
       meta: {
