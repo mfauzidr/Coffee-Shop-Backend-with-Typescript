@@ -33,13 +33,6 @@ export const getAllOrders = async (
   try {
     let orders: IOrders[];
     let count: number;
-    // if (req.query.userId) {
-    //   orders = await findAllByUid(req.query);
-    //   count = await totalCountByUid(req.query);
-    // } else {
-    //   orders = await findAll(req.query);
-    //   count = await totalCount(req.query);
-    // }
     orders = await findAll(req.query);
 
     if (orders.length < 1) {
@@ -68,7 +61,7 @@ export const getAllOrders = async (
     if (err.message === "no_data") {
       return res.status(404).json({
         success: false,
-        message: "Data not found",
+        message: "Orders not found",
       });
     }
 

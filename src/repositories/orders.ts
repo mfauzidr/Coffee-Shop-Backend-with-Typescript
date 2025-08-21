@@ -2,43 +2,6 @@ import { QueryResult } from "pg";
 import db from "../config/pg";
 import { IOrders, IOrdersBody, IOrdersQueryParams } from "../models/orders";
 
-// export const totalCount = async ({ userId = "" }): Promise<number> => {
-//   let query = `
-//     SELECT COUNT(*) as total
-//     FROM "orders"
-//   `;
-//   let values: string[] = [];
-
-//   if (userId) {
-//     query += ` WHERE "userId" ILIKE $1`;
-//     values.push(`%${userId}%`);
-//   }
-
-//   const result: QueryResult<{ total: number }> = await db.query(query, values);
-//   return result.rows[0].total;
-// };
-
-// export const findAll = async ({
-//   userId = "",
-//   page = "1",
-//   limit = "3",
-// }: IOrdersQueryParams): Promise<IOrders[]> => {
-//   const offset: number = (parseInt(page) - 1) * parseInt(limit);
-
-//   let findOrderQuery = "";
-//   let values: string[] = [];
-//   if (userId) {
-//     findOrderQuery = `WHERE "userId" ILIKE $1`;
-//     values.push(`%${userId}%`);
-//   }
-//   const query = `SELECT * FROM "orders"
-//   ${findOrderQuery}
-//   LIMIT ${limit} OFFSET ${offset}
-//   `;
-//   const result: QueryResult<IOrders> = await db.query(query, values);
-//   return result.rows;
-// };
-
 export const findDetails = async (uuid: string): Promise<IOrders[]> => {
   const query = `
     SELECT
