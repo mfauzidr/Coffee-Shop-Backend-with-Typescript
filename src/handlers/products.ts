@@ -235,7 +235,6 @@ export const updateProduct = async (
       );
 
       if (uploadResult.error) {
-        console.log(uploadResult.error);
         return res.status(400).json({
           success: false,
           message: "Failed to upload image",
