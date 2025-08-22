@@ -1,12 +1,12 @@
 import { Request, Response } from "express";
-import { IUserBody } from "../models/users";
+import { IForgotPasswordBody, IUser, IUserBody } from "../models/users";
 import { IAuthResponse, IErrResponse, IUserResponse } from "../models/response";
 import { register, getEmail } from "../repositories/auth";
 import bcrypt from "bcrypt";
-import { update } from "../repositories/users";
 import jwt from "jsonwebtoken";
 import { IPayload } from "../models/payload";
 import { jwtOptions } from "../middlewares/auth.middleware";
+import { AppParams } from "../models/params";
 
 export const login = async (
   req: Request<{}, {}, IUserBody>,
@@ -58,7 +58,7 @@ export const registerUser = async (
   const { password } = req.body;
 
   if (!req.body.fullName || !req.body.email || !password) {
-    const missingFields = [];
+    const missingFields: string[] = [];
     if (!req.body.fullName) missingFields.push("fullName");
     if (!req.body.email) missingFields.push("email");
     if (!password) missingFields.push("password");
@@ -82,7 +82,7 @@ export const registerUser = async (
     req.body.fullName.match(specialCharsRegex) ||
     req.body.password.match(specialCharsRegex)
   ) {
-    const invalidFields = [];
+    const invalidFields: string[] = [];
     if (req.body.fullName.match(specialCharsRegex))
       invalidFields.push("fullName");
     if (req.body.password.match(specialCharsRegex))
@@ -130,39 +130,54 @@ export const registerUser = async (
   }
 };
 
-export const forgotPassword = async (
-  req: Request<{}, {}, IUserBody>,
-  res: Response<IUserResponse>
-) => {
-  const { email, password, role } = req.body;
+// export const forgotPassword = async (
+//   req: Request<{}, {}, IForgotPasswordBody>,
+//   res: Response<IUserResponse>
+// ) => {
+//   const { password, newPassword } = req.body;
+//   const uuid = (req as Request<AppParams> & { userPayload: IPayload })
+//     .userPayload!.uuid;
 
-  try {
-    const user = await getEmail(email);
-    if (!email) {
-      throw new Error("Insert Email");
-    }
-    if (!user) {
-      throw new Error("Email is not registered");
-    }
-    if (!password) {
-      throw new Error("Please insert the new password");
-    }
-    const salt = await bcrypt.genSalt();
-    const hashed = await bcrypt.hash(password, salt);
+//   try {
+//     const user = await getPassword(uuid!);
+//     if (!password) {
+//       throw new Error("Insert Old Password");
+//     }
+//     if (!user) {
+//       throw new Error("Wrong Password");
+//     }
+//     if (!newPassword) {
+//       throw new Error("Please insert the new password");
+//     }
 
-    const updatePassword = { password: hashed };
+//     const isOldPasswordCorrect = await bcrypt.compare(password, user.password);
+//     if (!isOldPasswordCorrect) {
+//       throw new Error("Wrong old password");
+//     }
 
-    const updateUser = await update(user.uuid, updatePassword);
-    return res.json({
-      success: true,
-      message: "Update password successfully",
-    });
-  } catch (error) {
-    const err = error as IErrResponse;
-    console.log(JSON.stringify(err));
-    return res.status(400).json({
-      success: false,
-      message: err.message || "Bad request",
-    });
-  }
-};
+//     const isSame = await bcrypt.compare(newPassword, user.password);
+//     if (isSame) {
+//       throw new Error(
+//         "Your new password can't be the same as your old password"
+//       );
+//     }
+
+//     const salt = await bcrypt.genSalt();
+//     const newHashed = await bcrypt.hash(newPassword, salt);
+
+//     const updatePassword = { password: newHashed };
+
+//     await update(user.uuid, updatePassword);
+//     return res.json({
+//       success: true,
+//       message: "Update password successfully",
+//     });
+//   } catch (error) {
+//     const err = error as IErrResponse;
+//     console.log(JSON.stringify(err));
+//     return res.status(400).json({
+//       success: false,
+//       message: err.message || "Bad request",
+//     });
+//   }
+// };

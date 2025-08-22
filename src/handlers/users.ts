@@ -6,17 +6,20 @@ import {
   update,
   deleteUser,
   totalCount,
+  getPassword,
 } from "../repositories/users";
 import {
   IUserParams,
   IUserBody,
   IUserQueryParams,
-  IUser,
+  IForgotPasswordBody,
 } from "../models/users";
 import { IErrResponse, IUserResponse } from "../models/response";
 import { cloudinaryUploader } from "../helper/cloudinary";
 import paginLink from "../helper/paginLink";
 import bcrypt from "bcrypt";
+import { AppParams } from "../models/params";
+import { IPayload } from "../models/payload";
 
 export const getAllUsers = async (
   req: Request<{}, {}, {}, IUserQueryParams>,
@@ -108,7 +111,7 @@ export const createUsers = async (
   const { password } = req.body;
   try {
     if (!req.body.fullName || !req.body.email || !req.body.password) {
-      const missingFields = [];
+      const missingFields: string[] = [];
       if (!req.body.fullName) missingFields.push("fullName");
       if (!req.body.email) missingFields.push("email");
       if (!req.body.password) missingFields.push("password");
@@ -269,6 +272,57 @@ export const deleteUsers = async (
     return res.status(500).json({
       success: false,
       message: "Internal server error",
+    });
+  }
+};
+
+export const updatePassword = async (
+  req: Request<{}, {}, IForgotPasswordBody>,
+  res: Response<IUserResponse>
+) => {
+  const { password, newPassword } = req.body;
+  const uuid = (req as Request<AppParams> & { userPayload: IPayload })
+    .userPayload!.uuid;
+
+  try {
+    const user = await getPassword(uuid!);
+    if (!password) {
+      throw new Error("Insert Old Password");
+    }
+    if (!newPassword) {
+      throw new Error("Please insert the new password");
+    }
+    if (!user) {
+      throw new Error("User Not Found");
+    }
+
+    const isOldPasswordCorrect = await bcrypt.compare(password, user.password);
+    if (!isOldPasswordCorrect) {
+      throw new Error("Wrong old password");
+    }
+
+    if (password === newPassword) {
+      throw new Error(
+        "Your new password can't be the same as your old password"
+      );
+    }
+
+    const salt = await bcrypt.genSalt();
+    const newHashed = await bcrypt.hash(newPassword, salt);
+
+    const updatePassword = { password: newHashed };
+
+    await update(uuid!, updatePassword);
+    return res.json({
+      success: true,
+      message: "Update password successfully",
+    });
+  } catch (error) {
+    const err = error as IErrResponse;
+    console.log(JSON.stringify(err));
+    return res.status(400).json({
+      success: false,
+      message: err.message || "Bad request",
     });
   }
 };

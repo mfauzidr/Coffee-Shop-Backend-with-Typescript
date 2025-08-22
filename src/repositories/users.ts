@@ -158,3 +158,14 @@ export const deleteUser = async (uuid: string): Promise<IUser[]> => {
   const result: QueryResult<IUser> = await db.query(query, values);
   return result.rows;
 };
+
+export const getPassword = async (uuid: string): Promise<IUser> => {
+  const query = `
+    SELECT
+      "password"
+    FROM "users"
+    WHERE "uuid" = $1`;
+  const values: string[] = [uuid];
+  const { rows }: QueryResult<IUser> = await db.query(query, values);
+  return rows[0];
+};

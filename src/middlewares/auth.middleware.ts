@@ -43,7 +43,8 @@ export const authMiddleware =
             err: "Forbidden Access",
           });
         }
-        req.userPayload = payload as IPayload;
+        (req as Request<AppParams> & { userPayload?: IPayload }).userPayload =
+          payload as IPayload;
         next();
       }
     );

@@ -170,9 +170,6 @@ export const createProduct = async (
       await insertProductSize(data);
     }
 
-    console.log(req.file);
-    console.log(req);
-
     if (req.file) {
       const uploadResult = await cloudinaryUploader(
         req,

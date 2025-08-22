@@ -11,24 +11,26 @@ export const getEmail = async (email: string): Promise<IUser> => {
       "password",
       "role"
     FROM "users"
-    WHERE "email" = $1`
-  const values: string[] = [email]
-  const { rows }: QueryResult<IUser> = await db.query(query, values)
-  return rows[0]
-}
+    WHERE "email" = $1`;
+  const values: string[] = [email];
+  const { rows }: QueryResult<IUser> = await db.query(query, values);
+  return rows[0];
+};
 
-export const register = async (data: IUserBody, hashedPassword: string): Promise<IUser[]> => {
-
+export const register = async (
+  data: IUserBody,
+  hashedPassword: string
+): Promise<IUser[]> => {
   const query = `
         INSERT INTO "users"
         ("fullName", "email", "password", "role")
         VALUES
         ($1, $2, $3, 'customer')
         RETURNING "fullName", "email", "uuid", "role"
-    `
+    `;
 
-  const { fullName, email } = data
-  const values = [fullName, email, hashedPassword]
+  const { fullName, email } = data;
+  const values = [fullName, email, hashedPassword];
   const result: QueryResult<IUser> = await db.query(query, values);
-  return result.rows
-}
+  return result.rows;
+};

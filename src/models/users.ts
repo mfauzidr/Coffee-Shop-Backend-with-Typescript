@@ -6,8 +6,8 @@ export interface IUser extends IUserBody {
 }
 
 export interface IUserParams {
-  uuid: string
-  email?: string
+  uuid: string;
+  email?: string;
 }
 
 export interface IUserQueryParams {
@@ -15,7 +15,7 @@ export interface IUserQueryParams {
   findBy?: string;
   orderBy?: string;
   page?: string;
-  limit?: string
+  limit?: string;
 }
 
 export interface IUserBody {
@@ -25,5 +25,10 @@ export interface IUserBody {
   phoneNumber: string;
   role: string;
   address?: string;
-  image?: string
+  image?: string;
+}
+
+export interface IForgotPasswordBody {
+  password: string;
+  newPassword: string;
 }

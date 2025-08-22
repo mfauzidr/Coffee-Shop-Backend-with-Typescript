@@ -43,7 +43,6 @@ export const getAllOrders = async (
     const currentPage = parseInt((req.query.page as string) || "1");
     const totalData = count;
     const totalPage = Math.ceil(totalData / parseInt(limit as string));
-    console.log(totalPage);
 
     return res.json({
       meta: {

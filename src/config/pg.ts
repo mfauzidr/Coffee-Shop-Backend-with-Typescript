@@ -8,7 +8,6 @@ const config: PoolConfig = {
   port: parseInt(process.env.DB_PORT as string) || 5432,
 };
 
-console.log(config);
 const db = new Pool(config);
 
 export default db;
