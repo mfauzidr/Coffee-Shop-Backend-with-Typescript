@@ -7,7 +7,7 @@ import {
   updateProduct,
 } from "../handlers/products";
 import { authMiddleware } from "../middlewares/auth.middleware";
-import { singleCloudUploader } from "../middlewares/upload";
+import { multiCloudUploader, singleCloudUploader } from "../middlewares/upload";
 
 const productsRouter = Router();
 
@@ -18,14 +18,14 @@ productsRouter.get("/:uuid", getDetailProduct);
 productsRouter.post(
   "/",
   authMiddleware(["admin"]),
-  singleCloudUploader("image"),
+  multiCloudUploader("image", 4),
   createProduct
 );
 
 productsRouter.patch(
   "/:uuid",
   authMiddleware(["admin"]),
-  singleCloudUploader("image"),
+  multiCloudUploader("image", 4),
   updateProduct
 );
 

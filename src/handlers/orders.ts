@@ -182,9 +182,9 @@ export const createOrders = async (
           const sizeResult = await findOneSize(productSizeId);
           const variantResult = await findOneVariant(productVariantId);
 
-          if (index === 0 && productResult[0]?.image) {
-            image = productResult[0].image;
-          }
+          // if (index === 0 && productResult[0]?.image) {
+          //   image = productResult[0].image;
+          // }
 
           const total =
             (productResult[0].price +

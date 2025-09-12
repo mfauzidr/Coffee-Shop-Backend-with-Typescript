@@ -7,6 +7,7 @@ import {
   update,
   deleteProduct,
   findOneById,
+  insertProductImage,
 } from "../repositories/products";
 import {
   IProducts,
@@ -95,6 +96,7 @@ export const getDetailProduct = async (
     if (product.length === 0) {
       throw new Error("Not Found");
     }
+    console.log(product);
     return res.json({
       success: true,
       message: "OK",
@@ -130,17 +132,11 @@ export const createProduct = async (
   res: Response<IProductsResponse>
 ): Promise<Response> => {
   try {
-    if (typeof req.body.price === "string") {
-      req.body.price = parseFloat(req.body.price);
-    }
-
-    if (typeof req.body.categoryId === "string") {
-      req.body.categoryId = parseInt(req.body.categoryId, 10);
-    }
-
-    if (typeof req.body.sizeId === "string") {
-      req.body.sizeId = parseInt(req.body.sizeId, 10);
-    }
+    const price = Number(req.body.price);
+    const categoryId = req.body.categoryId
+      ? Number(req.body.categoryId)
+      : undefined;
+    const sizeId = req.body.sizeId ? Number(req.body.sizeId) : undefined;
 
     const productData = {
       name: req.body.name,
@@ -170,21 +166,37 @@ export const createProduct = async (
       await insertProductSize(data);
     }
 
-    if (req.file) {
-      const uploadResult = await cloudinaryUploader(
-        req,
-        "product",
-        productUuid
-      );
+    if (req.files && Array.isArray(req.files)) {
+      const uploadResults: string[] = [];
 
-      if (uploadResult.error) {
-        return res.status(400).json({
-          success: false,
-          message: "Failed to upload image",
-        });
+      for (const [index, file] of (
+        req.files as Express.Multer.File[]
+      ).entries()) {
+        const fakeReq = { file } as Request;
+
+        const uploadResult = await cloudinaryUploader(
+          fakeReq,
+          "product",
+          productUuid
+        );
+
+        if (uploadResult.error) {
+          return res.status(400).json({
+            success: false,
+            message: "Failed to upload image",
+          });
+        }
+
+        if (uploadResult.result?.secure_url) {
+          uploadResults.push(uploadResult.result.secure_url);
+          await insertProductImage({
+            productUuid,
+            imageUrl: uploadResult.result.secure_url,
+            isPrimary: index === 0,
+            orderIndex: index + 1,
+          });
+        }
       }
-      const imageUrl = uploadResult.result?.secure_url;
-      await update(productUuid, { image: imageUrl });
     }
 
     return res.json({
@@ -227,22 +239,22 @@ export const updateProduct = async (
       ...req.body,
     };
 
-    if (req.file) {
-      const uploadResult = await cloudinaryUploader(
-        req,
-        "product",
-        uuid as string
-      );
+    // if (req.file) {
+    //   const uploadResult = await cloudinaryUploader(
+    //     req,
+    //     "product",
+    //     uuid as string
+    //   );
 
-      if (uploadResult.error) {
-        return res.status(400).json({
-          success: false,
-          message: "Failed to upload image",
-        });
-      }
-      const imageUrl = uploadResult.result?.secure_url;
-      data.image = imageUrl;
-    }
+    //   if (uploadResult.error) {
+    //     return res.status(400).json({
+    //       success: false,
+    //       message: "Failed to upload image",
+    //     });
+    //   }
+    //   const imageUrl = uploadResult.result?.secure_url;
+    //   data.image = imageUrl;
+    // }
     const product = await update(uuid, data);
     if (product.length === 0) {
       throw new Error("Not Found");

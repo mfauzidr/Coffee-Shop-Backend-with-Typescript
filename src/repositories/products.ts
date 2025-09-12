@@ -1,6 +1,7 @@
 import { QueryResult } from "pg";
 import db from "../config/pg";
 import {
+  IProductImage,
   IProducts,
   IProductsBody,
   IProductsQueryParams,
@@ -128,15 +129,16 @@ export const findAll = async ({
       "p"."name" AS "productName",
       "c"."name" AS "category",
       "p"."description",
-      "p"."image",
       "p"."price",
       "p"."discountPrice",
       "p"."uuid",
       "p"."createdAt",
-      "p"."updatedAt"
+      "p"."updatedAt",
+      "pi"."imageUrl" AS "image"
     FROM "products" "p"
     LEFT JOIN "productCategories" "pc" ON "pc"."productId" = "p"."id"
     LEFT JOIN "categories" "c" ON "pc"."categoryId" = "c"."id"
+    LEFT JOIN "productImages" "pi" ON "pi"."productUuid" = "p"."uuid" AND "pi"."isPrimary" = true
     ${whereQuery}
     ${orderByClause}
     LIMIT ${limit} OFFSET ${offset}
@@ -152,7 +154,6 @@ export const findDetails = async (
 ): Promise<IProducts[]> => {
   const columns: string[] = [
     "id",
-    "image",
     "description",
     "price",
     "isRecommended",
@@ -164,17 +165,22 @@ export const findDetails = async (
   const query = `
     SELECT 
     "p"."name" as "productName",
-    ${selectColumns
-      .map((col) => `"p"."${col}" AS "${col}"`)
-      .join(
-        ", "
-      )},"c"."id" AS "categoryId", "pr"."rate" AS "rating","ps"."sizeId" AS "sizeId"
+    ${selectColumns.map((col) => `"p"."${col}" AS "${col}"`).join(", ")},
+      "c"."id" AS "categoryId", 
+      "pr"."rate" AS "rating",
+      "ps"."sizeId" AS "sizeId", 
+    COALESCE(
+      json_agg(DISTINCT "pi"."imageUrl") FILTER (WHERE "pi"."id" IS NOT NULL),
+      '[]'
+    ) AS "image"
     FROM "products" "p"
     LEFT JOIN "productCategories" "pc" ON "p"."id" = "pc"."productId"
     LEFT JOIN "categories" "c" ON "pc"."categoryId" = "c"."id"
     LEFT JOIN "productRatings" "pr" ON "p"."id" = "pr"."productId"
     LEFT JOIN "sizeProductRelations" "ps" ON "p"."id" = "ps"."productId"
+    LEFT JOIN "productImages" "pi" ON "pi"."productUuid" = "p"."uuid"
     WHERE "p"."uuid" = $1
+    GROUP BY "p"."id", "p"."name", "c"."id", "pr"."rate", "ps"."sizeId"
   `;
 
   const values: string[] = [uuid];
@@ -247,5 +253,21 @@ export const findOneById = async (uuid: string): Promise<IProducts[]> => {
     `;
   const values: string[] = [uuid];
   const { rows } = await db.query(query, values);
+  return rows;
+};
+
+export const insertProductImage = async ({
+  productUuid,
+  imageUrl,
+  isPrimary,
+  orderIndex,
+}: IProductImage): Promise<IProductImage[]> => {
+  const query = `
+    INSERT INTO "productImages" ("productUuid", "imageUrl", "isPrimary", "orderIndex")
+    VALUES ($1, $2, $3, $4)
+  `;
+  const values = [productUuid, imageUrl, isPrimary, orderIndex];
+  const { rows } = await db.query(query, values);
+
   return rows;
 };

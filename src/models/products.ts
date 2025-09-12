@@ -1,13 +1,21 @@
 export interface IProducts extends IProductsBody {
   id: number;
   uuid: string;
-  image?: string;
   category?: string;
   discount?: string;
   isRecommended?: boolean;
   rating?: number;
   createdAt: Date;
   updatedAt: Date;
+  images?: IProductImage[];
+}
+
+export interface IProductImage {
+  id?: number;
+  productUuid: string;
+  imageUrl: string;
+  isPrimary: boolean;
+  orderIndex: number;
 }
 
 export interface IProductsParams {
@@ -29,7 +37,6 @@ export interface IProductsBody {
   name: string;
   description: string;
   price: number;
-  image?: string;
   categoryId?: number;
   sizeId?: number;
 }
