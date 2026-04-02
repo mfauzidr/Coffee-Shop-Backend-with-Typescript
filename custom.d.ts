@@ -1,5 +1,5 @@
 import * as express from "express-serve-static-core";
-import { IPayload } from "./src/models/payload";
+import { IPayload } from "./src/shared/models/payload.model";
 
 declare global {
   namespace Express {

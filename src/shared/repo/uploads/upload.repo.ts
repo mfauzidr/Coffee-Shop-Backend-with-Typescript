@@ -1,0 +1,24 @@
+import { QueryResult } from "pg";
+import db from "@shared/config/pg"
+import { IUpload, IUploadBody } from "@shared/models/upload.model";
+
+export const uploadUser = async (image: IUploadBody, userId: IUploadBody): Promise<IUpload[]> => {
+  const query = `INSERT INTO "userImage" ("imageName", "userId")
+  VALUES ($1, $2)`
+
+  const values = [image, userId]
+
+  const results: QueryResult<IUpload> = await db.query(query, values)
+  return results.rows
+}
+
+export const uploadProduct = async (image: IUploadBody, userId: IUploadBody): Promise<IUpload[]> => {
+  const query = `INSERT INTO "productImage" ("imageName", "userId")
+  VALUES ($1, $2)`
+
+  const values = [image, userId]
+
+  const results: QueryResult<IUpload> = await db.query(query, values)
+  return results.rows
+}
+
