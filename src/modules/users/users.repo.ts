@@ -2,20 +2,16 @@ import { QueryResult } from "pg";
 import db from "@shared/config/pg";
 import { IUser, IUserBody, IUserQueryParams } from "@modules/users/users.model";
 
+type QueryValue = string | number | Date | null;
+
 export const totalCount = async ({
   search = "",
-  findBy = "",
 }): Promise<number> => {
   let query = `SELECT COUNT(*) as total FROM "users"`;
-  let values: string[] = [];
+  let values: QueryValue[] = [];
 
-  if (findBy === "fullName") {
-    query += ` WHERE "fullName" ILIKE $1`;
-    values.push(`%${search}%`);
-  }
-
-  if (findBy === "role") {
-    query += ` WHERE "role" ILIKE $1`;
+  if (search ) {
+    query += ` WHERE "fullName" ILIKE $${values.length + 1} OR "role" ILIKE $${values.length + 1}`;
     values.push(`%${search}%`);
   }
 
@@ -24,44 +20,33 @@ export const totalCount = async ({
 };
 
 export const findAllUsers = async ({
-  findBy = "",
   search = "",
-  orderBy = "",
-  page = "1",
-  limit = "5",
+  sortBy,
+  order,
+  page,
+  limit,
 }: IUserQueryParams): Promise<IUser[]> => {
-  const offset: number = (parseInt(page) - 1) * parseInt(limit);
+  const pageNum = Number(page) || 1;
+  const limitNum = Number(limit) || 5;
+  const offset = (pageNum - 1) * limitNum;
 
-  let orderByClause = `ORDER BY "id" ASC`;
-  let whereClause: string = "";
-  let values: string[] = [];
+  let values: QueryValue[] = [];
+  let conditions: string[] = [];
+  let whereQuery: string = "";
 
-  if (findBy) {
-    switch (findBy) {
-      case "fullName":
-        whereClause = `WHERE "fullName" ILIKE $1`;
-        values.push(`%${search}%`);
-        break;
-      case "role":
-        whereClause = `WHERE "role" = $1`;
-        values.push(search);
-        break;
-    }
+  if (search){
+    conditions.push(`"fullName" ILIKE $${values.length + 1} OR "role" ILIKE $${values.length + 1}`);
+    values.push(`%${search}%`)
   }
 
-  switch (orderBy) {
-    case "A-Z":
-      orderByClause = `ORDER BY "fullName" ASC`;
-      break;
-    case "Z-A":
-      orderByClause = `ORDER BY "fullName" DESC`;
-      break;
-    case "oldest":
-      orderByClause = `ORDER BY "createdAt" ASC`;
-      break;
-    case "newest":
-      orderByClause = `ORDER BY "createdAt" DESC`;
-      break;
+  if (conditions.length > 0) {
+    whereQuery = `AND ` + conditions.join(" AND ");
+  }
+
+  let orderByClause = 'ORDER BY "id" ASC'
+
+  if (sortBy && order) {
+    orderByClause = `ORDER BY ${sortBy} ${order}`
   }
 
   const query = `
@@ -69,18 +54,23 @@ export const findAllUsers = async ({
       "id",
       "fullName", 
       "email",
-      "password",
       "phoneNumber",
       "role",
       "image",
       "uuid",
+      "isActive",
       "createdAt",
       "updatedAt"
     FROM "users"
-    ${whereClause}
+    WHERE "isActive" = true ${whereQuery}
     ${orderByClause}
-    LIMIT ${limit} OFFSET ${offset}
+    LIMIT $${values.length + 1} OFFSET $${values.length + 2}
   `;
+
+  console.log(query)
+
+  values.push(limitNum);
+  values.push(offset);
 
   const result: QueryResult<IUser> = await db.query(query, values);
   return result.rows;
@@ -94,17 +84,20 @@ export const findDetails = async (uuid: string): Promise<IUser[]> => {
       "email",
       "phoneNumber",
       "role",
-      "image"
+      "image",
+      "isActive",
+      "createdAt",
+      "updatedAt"
     FROM "users" 
-    WHERE "uuid" = $1`;
-  const values: string[] = [uuid];
+    WHERE "uuid" = $1 AND "isActive" = true`;
+  const values: QueryValue[] = [uuid];
   const result: QueryResult<IUser> = await db.query(query, values);
   return result.rows;
 };
 
 export const insert = async (data: IUserBody): Promise<IUser[]> => {
-  const columns: string[] = [];
-  const values: string[] = [];
+  const columns: QueryValue[] = [];
+  const values: QueryValue[] = [];
   for (const [key, value] of Object.entries(data)) {
     values.push(value);
     columns.push(`"${key}"`);
@@ -128,10 +121,10 @@ export const insert = async (data: IUserBody): Promise<IUser[]> => {
 
 export const update = async (
   uuid: string,
-  data: Partial<IUserBody>
+  data: Partial<IUserBody>,
 ): Promise<IUser[]> => {
-  const columns: string[] = [];
-  const values: string[] = [uuid];
+  const columns: QueryValue[] = [];
+  const values: QueryValue[] = [uuid];
   for (const [key, value] of Object.entries(data)) {
     values.push(value);
     columns.push(`"${key}"=$${values.length}`);
@@ -141,20 +134,38 @@ export const update = async (
         SET ${columns.join(", ")},
         "updatedAt" = now()
         WHERE "uuid" = $1
-        RETURNING *
-    `;
+        RETURNING 
+          "uuid",
+          "fullName",
+          "email",
+          "phoneNumber",
+          "role",
+          "image",
+          "isActive",
+          "createdAt",
+          "updatedAt"
+        `;
   const result: QueryResult<IUser> = await db.query(query, values);
   return result.rows;
 };
 
-export const deleteUser = async (uuid: string): Promise<IUser[]> => {
-  const query = `
-        DELETE FROM "users"
-        WHERE "uuid" = $1
-        RETURNING *
-    `;
+export const setActiveUser = async (uuid: string, isActive: boolean): Promise<IUser[]> => {
+  const values = [uuid, isActive];
+  let deletedAtClause = "";
 
-  const values = [uuid];
+  if (isActive === true) {
+    deletedAtClause = "null";
+  } else if (isActive === false) {
+    deletedAtClause = "now()";
+  }
+
+  const query = `
+        UPDATE "users" 
+        SET "isActive" = $2,
+        "deletedAt" = ${deletedAtClause}
+        WHERE "uuid" = $1 
+        RETURNING *`;
+
   const result: QueryResult<IUser> = await db.query(query, values);
   return result.rows;
 };
@@ -165,7 +176,7 @@ export const getPassword = async (uuid: string): Promise<IUser> => {
       "password"
     FROM "users"
     WHERE "uuid" = $1`;
-  const values: string[] = [uuid];
+  const values: QueryValue[] = [uuid];
   const { rows }: QueryResult<IUser> = await db.query(query, values);
   return rows[0];
 };

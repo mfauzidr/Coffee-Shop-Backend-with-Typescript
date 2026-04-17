@@ -6,21 +6,28 @@ import { IPayload } from "@shared/models/payload.model";
 import { jwtOptions } from "@middlewares/auth.middleware";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import { AppError } from "@shared/helper/appError";
 
 export const login = async (
   req: Request<{}, {}, IUserBody>,
   res: Response<IAuthResponse>
 ) => {
   const { email, password } = req.body;
-  try {
+  if(!email){
+    throw new AppError("NO_EMAIL", "Please enter your email", 400)
+  }
+  if(!password || password === ""){
+    throw new AppError("NO_PASS", "Please enter your password", 400)
+  }
     const user = await getEmail(email);
     if (!user) {
-      throw new Error("wrong");
+      throw new AppError("NO_DATA", "User not found", 400);
     }
     const hash = user.password;
-    const name = user.fullName;
     const isValid = await bcrypt.compare(password, hash);
-    if (!isValid) throw new Error("wrong");
+    if (!isValid) {
+      throw new AppError("WRONG_PASSWORD", "Wrong Password", 400)
+    }
 
     const payload: IPayload = { id: user.id, uuid: user.uuid, role: user.role };
     const token = jwt.sign(
@@ -29,25 +36,11 @@ export const login = async (
       jwtOptions
     );
 
-    return res.json({
+    return res.status(200).json({
       success: true,
-      message: `Login Success. Welcome ${name || email}`,
+      message: `Login Success.`,
       results: [{ token }],
     });
-  } catch (error) {
-    const err = error as IErrResponse;
-    if (err.message === "wrong") {
-      return res.status(401).json({
-        success: false,
-        message: "Wrong email or password",
-      });
-    }
-    console.error(err);
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
-  }
 };
 
 export const registerUser = async (
@@ -62,18 +55,12 @@ export const registerUser = async (
     if (!req.body.email) missingFields.push("email");
     if (!password) missingFields.push("password");
 
-    return res.status(400).json({
-      success: false,
-      message: `${missingFields.join(", ")} cannot be empty`,
-    });
+    throw new AppError("MISSING_FIELD", `${missingFields.join(", ")} cannot be empty`, 400)
   }
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!req.body.email.match(emailRegex)) {
-    return res.status(400).json({
-      success: false,
-      message: "Invalid email format",
-    });
+    throw new AppError("INVALID", "Invalid email format", 400)
   }
 
   const specialCharsRegex = /[!@#$%^&*(),.?":{}|<>]/;
@@ -87,12 +74,9 @@ export const registerUser = async (
     if (req.body.password.match(specialCharsRegex))
       invalidFields.push("password");
 
-    return res.status(400).json({
-      success: false,
-      message: `${invalidFields.join(", ")} cannot contain special characters`,
-    });
+    throw new AppError("INVALID", `${invalidFields.join(", ")} cannot contain special characters`, 400)
   }
-  try {
+  
     const salt = await bcrypt.genSalt();
     const hashed = await bcrypt.hash(password, salt);
 
@@ -103,28 +87,4 @@ export const registerUser = async (
       message: "Register successfully",
       results: user,
     });
-  } catch (error) {
-    const err = error as IErrResponse;
-    if (err.code === "23502") {
-      return res.status(400).json({
-        success: false,
-        message: `${err.column} Cannot be empty`,
-      });
-    }
-    if (err.code === "23505") {
-      const errDetails = err.detail?.match(/\((.*?)\)=\((.*?)\)/);
-      const column = errDetails ? errDetails[1] : "field";
-
-      return res.status(400).json({
-        success: false,
-        message: `${column} already exist.`,
-      });
-    }
-
-    console.log(err);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
-  }
 };

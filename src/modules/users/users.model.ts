@@ -3,6 +3,7 @@ export interface IUser extends IUserBody {
   uuid: string;
   createdAt: Date;
   updatedAt?: Date;
+  deletedAt?: Date
 }
 
 export interface IUserParams {
@@ -12,8 +13,8 @@ export interface IUserParams {
 
 export interface IUserQueryParams {
   search?: string;
-  findBy?: string;
-  orderBy?: string;
+  sortBy?: string;
+  order?: string;
   page?: string;
   limit?: string;
 }

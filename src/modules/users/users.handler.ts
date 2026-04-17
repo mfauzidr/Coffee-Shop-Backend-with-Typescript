@@ -4,9 +4,9 @@ import {
   findDetails,
   insert,
   update,
-  deleteUser,
   totalCount,
   getPassword,
+  setActiveUser,
 } from "@modules/users/users.repo";
 import {
   IUserParams,
@@ -20,290 +20,206 @@ import paginLink from "@shared/helper/paginLink";
 import { AppParams } from "@shared/models/params.model";
 import { IPayload } from "@shared/models/payload.model";
 import bcrypt from "bcrypt";
+import { AppError } from "@shared/helper/appError";
 
 export const getAllUsers = async (
   req: Request<{}, {}, {}, IUserQueryParams>,
-  res: Response<IUserResponse>
+  res: Response<IUserResponse>,
 ) => {
-  try {
-    const users = await findAllUsers(req.query);
-    if (users.length < 1) {
-      throw new Error("no_data");
-    }
-    const limit = req.query.limit || "5";
-    const count = await totalCount(req.query);
-    const currentPage = parseInt((req.query.page as string) || "1");
-    const totalData = count;
-    const totalPage = Math.ceil(totalData / parseInt(limit as string));
-
-    return res.json({
-      meta: {
-        totalData,
-        totalPage,
-        currentPage,
-        nextPage: currentPage != totalPage ? paginLink(req, "next") : null,
-        prevPage: currentPage > 1 ? paginLink(req, "previous") : null,
-      },
-      message: `List all users. ${count} data found`,
-      results: users,
-    });
-  } catch (error) {
-    const err = error as IErrResponse;
-    if (err.message === "no_data") {
-      return res.status(404).json({
-        success: false,
-        message: "Data not found",
-      });
-    }
-
-    console.log(err);
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
+  const users = await findAllUsers(req.query);
+  if (users.length < 1) {
+    throw new AppError("NO_DATA", "No Data Found", 404);
   }
+  const limit = req.query.limit || "5";
+  const count = await totalCount(req.query);
+  const currentPage = parseInt((req.query.page as string) || "1");
+  const totalData = count;
+  const totalPage = Math.ceil(totalData / parseInt(limit as string));
+
+  return res.status(200).json({
+    meta: {
+      totalData,
+      totalPage,
+      currentPage,
+      nextPage: currentPage != totalPage ? paginLink(req, "next") : null,
+      prevPage: currentPage > 1 ? paginLink(req, "previous") : null,
+    },
+    message: `List all users. ${count} data found`,
+    results: users,
+  });
 };
 
 export const getDetailUser = async (
   req: Request<IUserParams>,
-  res: Response<IUserResponse>
+  res: Response<IUserResponse>,
 ): Promise<Response> => {
   const { uuid } = req.params;
-  try {
-    const user = await findDetails(uuid as string);
-    if (user.length === 0) {
-      throw new Error("Not Found");
-    }
-    return res.json({
-      success: true,
-      message: "OK",
-      results: user,
-    });
-  } catch (error) {
-    const err = error as IErrResponse;
 
-    if (err.message === "Not Found") {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    if (err.code === "22P02") {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid UUID format.",
-      });
-    }
-
-    console.log(err);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+  if (!uuid || uuid === ":uuid") {
+    throw new AppError("NO_ID", "UUID must be provided", 400);
   }
+
+  const user = await findDetails(uuid as string);
+  if (user.length === 0) {
+    throw new AppError("NO_DATA", "No Data Found", 404);
+  }
+  return res.status(200).json({
+    success: true,
+    message: "User Retrieved Successfully",
+    results: user,
+  });
 };
 
 export const createUsers = async (
   req: Request<{}, {}, IUserBody>,
-  res: Response<IUserResponse>
+  res: Response<IUserResponse>,
 ) => {
   const { password } = req.body;
-  try {
-    if (!req.body.fullName || !req.body.email || !req.body.password) {
-      const missingFields: string[] = [];
-      if (!req.body.fullName) missingFields.push("fullName");
-      if (!req.body.email) missingFields.push("email");
-      if (!req.body.password) missingFields.push("password");
+  if (!req.body.fullName || !req.body.email || !req.body.password) {
+    const missingFields: string[] = [];
+    if (!req.body.fullName) missingFields.push("fullName");
+    if (!req.body.email) missingFields.push("email");
+    if (!req.body.password) missingFields.push("password");
 
-      return res.status(400).json({
-        success: false,
-        message: `${missingFields.join(", ")} cannot be empty`,
-      });
-    }
-    const salt = await bcrypt.genSalt();
-    const hashed = await bcrypt.hash(password, salt);
-    req.body.password = hashed;
-
-    const user = await insert(req.body);
-    const userUuid = user[0].uuid;
-
-    if (req.file) {
-      const uploadResult = await cloudinaryUploader(req, "user", userUuid);
-
-      if (uploadResult.error) {
-        return res.status(400).json({
-          success: false,
-          message: "Failed to upload image",
-        });
-      }
-      const imageUrl = uploadResult.result?.secure_url;
-      await update(userUuid, { image: imageUrl });
-    }
-    return res.json({
-      success: true,
-      message: "Create user successfully",
-      results: user,
-    });
-  } catch (error) {
-    const err = error as IErrResponse;
-    if (err.code === "23505") {
-      const errDetails = err.detail?.match(/\((.*?)\)=\((.*?)\)/);
-      const column = errDetails ? errDetails[1] : "field";
-
-      return res.status(400).json({
-        success: false,
-        message: `${column} already exist.`,
-      });
-    }
-
-    console.log(err);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+    throw new AppError(
+      "MISSING_FIELD",
+      `${missingFields.join(", ")} cannot be empty`,
+      400,
+    );
   }
+
+  const salt = await bcrypt.genSalt();
+  const hashed = await bcrypt.hash(password, salt);
+  req.body.password = hashed;
+
+  const user = await insert(req.body);
+  const userUuid = user[0].uuid;
+
+  if (req.file) {
+    const uploadResult = await cloudinaryUploader(req, "user", userUuid);
+
+    if (uploadResult.error) {
+      throw new AppError("UPLOAD_FAILED", "Failed to upload image", 400);
+    }
+    const imageUrl = uploadResult.result?.secure_url;
+    await update(userUuid, { image: imageUrl });
+  }
+  return res.json({
+    success: true,
+    message: "Create user successfully",
+    results: user,
+  });
 };
 
 export const updateUsers = async (
   req: Request<{ uuid: string }, {}, IUserBody>,
-  res: Response<IUserResponse>
+  res: Response<IUserResponse>,
 ): Promise<Response> => {
   const {
-    file,
     params: { uuid },
     body: { password },
   } = req;
 
-  try {
-    const data: Partial<IUserBody> = { ...req.body };
+  const data: Partial<IUserBody> = { ...req.body };
 
-    if (password) {
-      const salt = await bcrypt.genSalt();
-      const hashed = await bcrypt.hash(password, salt);
-      data.password = hashed;
-    }
-
-    if (req.file) {
-      const uploadResult = await cloudinaryUploader(req, "user", uuid);
-
-      if (uploadResult.error) {
-        return res.status(400).json({
-          success: false,
-          message: "Failed to upload image",
-        });
-      }
-      const imageUrl = uploadResult.result?.secure_url;
-      data.image = imageUrl;
-    }
-
-    const user = await update(uuid, data);
-    if (user.length === 0) {
-      throw new Error("Not Found");
-    }
-    return res.json({
-      success: true,
-      message: "Update user successfully",
-      results: user,
-    });
-  } catch (error) {
-    const err = error as IErrResponse;
-    if (err.message === "Not Found") {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    if (err.code === "22P02") {
-      return res.status(400).json({
-        success: false,
-        message: `Invalid UUID format.`,
-      });
-    }
-
-    if (err.code === "23505") {
-      const errDetails = err.detail?.match(/\((.*?)\)=\((.*?)\)/);
-      const column = errDetails ? errDetails[1] : "field";
-
-      return res.status(400).json({
-        success: false,
-        message: `${column} already exists.`,
-      });
-    }
-
-    console.log(err);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+  if (password) {
+    const salt = await bcrypt.genSalt();
+    const hashed = await bcrypt.hash(password, salt);
+    data.password = hashed;
   }
+
+  if (req.file) {
+    const uploadResult = await cloudinaryUploader(req, "user", uuid);
+
+    if (uploadResult.error) {
+      throw new AppError("UPLOAD_FAILED", "Failed to upload image", 400);
+    }
+    const imageUrl = uploadResult.result?.secure_url;
+    data.image = imageUrl;
+  }
+
+  const user = await update(uuid, data);
+  if (user.length < 1) {
+    throw new AppError("NOT_FOUND", "Users not found", 404);
+  }
+  return res.json({
+    success: true,
+    message: "Update user successfully",
+    results: user,
+  });
 };
 
-export const deleteUsers = async (
-  req: Request<IUserParams>,
-  res: Response<IUserResponse>
+export const deactivateUsers = async (
+  req: Request<{ uuid: string }>,
+  res: Response<IUserResponse>,
 ): Promise<Response> => {
   const { uuid } = req.params;
-  try {
-    const user = await deleteUser(uuid);
-    if (user.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-    return res.json({
-      success: true,
-      message: "User Deleted Successfully",
-      results: user,
-    });
-  } catch (error) {
-    const err = error as IErrResponse;
-
-    if (err.code === "22P02") {
-      return res.status(400).json({
-        success: false,
-        message: `Invalid UUID format.`,
-      });
-    }
-
-    console.log(err);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+  if (!uuid || uuid === ":uuid") {
+    throw new AppError("NO_ID", "UUID must be provided", 400);
   }
+
+  const result = await setActiveUser(uuid, false);
+  if (result.length < 1) {
+    throw new AppError("NOT_FOUND", "Users not found", 404);
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: "Users deactived",
+    results: result,
+  });
+};
+
+export const restoreUsers = async (
+  req: Request<{ uuid: string }>,
+  res: Response<IUserResponse>,
+): Promise<Response> => {
+  const { uuid } = req.params;
+  if (!uuid || uuid === ":uuid") {
+    throw new AppError("NO_ID", "UUID must be provided", 400);
+  }
+
+  const result = await setActiveUser(uuid, true);
+  if (result.length < 1) {
+    throw new AppError("NOT_FOUND", "Users not found", 404);
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: "Users restored",
+    results: result,
+  });
 };
 
 export const updatePassword = async (
   req: Request<{}, {}, IForgotPasswordBody>,
-  res: Response<IUserResponse>
+  res: Response<IUserResponse>,
 ) => {
   const { password, newPassword } = req.body;
   const uuid = (req as Request<AppParams> & { userPayload: IPayload })
     .userPayload!.uuid;
 
-  try {
     const user = await getPassword(uuid!);
     if (!password) {
-      throw new Error("Insert Old Password");
+      throw new AppError("INVALID", "Insert Old Password", 400);
     }
     if (!newPassword) {
-      throw new Error("Please insert the new password");
+      throw new AppError("INVALID", "Please insert the new password", 400);
     }
     if (!user) {
-      throw new Error("User Not Found");
+      throw new AppError("NOT_FOUND", "User Not Found", 404);
     }
 
     const isOldPasswordCorrect = await bcrypt.compare(password, user.password);
     if (!isOldPasswordCorrect) {
-      throw new Error("Wrong old password");
+      throw new AppError("INVALID", "Wrong old password", 400);
     }
 
     if (password === newPassword) {
-      throw new Error(
-        "Your new password can't be the same as your old password"
+      throw new AppError(
+        "INVALID",
+        "Your new password can't be the same as your old password",
+        400,
       );
     }
 
@@ -317,12 +233,5 @@ export const updatePassword = async (
       success: true,
       message: "Update password successfully",
     });
-  } catch (error) {
-    const err = error as IErrResponse;
-    console.log(JSON.stringify(err));
-    return res.status(400).json({
-      success: false,
-      message: err.message || "Bad request",
-    });
-  }
+  
 };

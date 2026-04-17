@@ -4,8 +4,9 @@ import {
   getDetailUser,
   createUsers,
   updateUsers,
-  deleteUsers,
   updatePassword,
+  deactivateUsers,
+  restoreUsers,
 } from "@modules/users/users.handler";
 import { authMiddleware } from "@middlewares/auth.middleware";
 import { singleCloudUploader } from "@middlewares/upload.middleware";
@@ -31,6 +32,7 @@ usersRouter.patch(
   singleCloudUploader("image"),
   updateUsers
 );
-usersRouter.delete("/:uuid", authMiddleware(["admin"]), deleteUsers);
+usersRouter.patch("/deactive/:uuid", authMiddleware(["admin"]), deactivateUsers);
+usersRouter.patch("/restore/:uuid", authMiddleware(["admin"]), restoreUsers);
 
 export default usersRouter;

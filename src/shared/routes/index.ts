@@ -10,6 +10,8 @@ import { sizeRouter } from "@modules/sizes/size.router";
 import { variantRouter } from "@modules/variants/variant.router";
 import { categoryRouter } from "@modules/categories/categories.router";
 import cartRouter from "@modules/carts/cart.router";
+import { globalErrorHandler } from "@middlewares/error.middleware";
+import { requestLogger } from "@middlewares/requestLogger.middleware";
 
 const router = Router();
 
@@ -24,5 +26,8 @@ router.use("/categories", categoryRouter);
 router.use("/cart", cartRouter);
 
 router.use("/auth", authRouter);
+
+router.use(requestLogger);
+router.use(globalErrorHandler);
 
 export default router;

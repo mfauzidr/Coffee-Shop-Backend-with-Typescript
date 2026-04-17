@@ -4,6 +4,7 @@ const envPath =
 
 dotenv.config({ path: envPath, override: true });
 
+import "express-async-errors";
 import express, { Request, Response } from "express";
 import morgan from "morgan";
 import cors, { CorsOptions } from "cors";
