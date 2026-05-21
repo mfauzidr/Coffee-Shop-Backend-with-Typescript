@@ -67,8 +67,6 @@ export const findAllUsers = async ({
     LIMIT $${values.length + 1} OFFSET $${values.length + 2}
   `;
 
-  console.log(query)
-
   values.push(limitNum);
   values.push(offset);
 
