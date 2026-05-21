@@ -39,6 +39,7 @@
     "multer": "^1.4.5-lts.1",
     "pg": "^8.11.5",
     "pino": "^10.3.1",
+    "tsc-alias": "^1.8.17",
     "tsconfig-paths": "^4.2.0"
   },
   "devDependencies": {
