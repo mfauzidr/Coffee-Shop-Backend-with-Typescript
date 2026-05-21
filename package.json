@@ -7,7 +7,7 @@
   },
   "scripts": {
     "clean": "rimraf /dist",
-    "build": "npm run clean && tsc --build && cp -r ./node_modules ./dist/node_modules",
+    "build": "npm run clean && tsc --build && tsc-alias && cp -r ./node_modules ./dist/node_modules",
     "start": "node ./dist/index.js",
     "dev:local": "cross-env NODE_ENV=local ts-node-dev --respawn --transpile-only -r tsconfig-paths/register api/index.ts",
     "dev:prod": "cross-env NODE_ENV=production ts-node-dev --respawn --transpile-only -r tsconfig-paths/register api/index.ts",
