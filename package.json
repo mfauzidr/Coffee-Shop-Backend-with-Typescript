@@ -8,7 +8,7 @@
   "scripts": {
     "clean": "rimraf /dist",
     "build": "npm run clean && tsc && tsc-alias",
-    "start": "node ./dist/api/index.js",
+    "start": "node dist/api/index.js",
     "dev:local": "cross-env NODE_ENV=local ts-node-dev --respawn --transpile-only -r tsconfig-paths/register api/index.ts",
     "dev:prod": "cross-env NODE_ENV=production ts-node-dev --respawn --transpile-only -r tsconfig-paths/register api/index.ts",
     "knex": "knex --knexfile src/config/knexfile.ts",
