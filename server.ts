@@ -1,4 +1,3 @@
-import "module-alias/register";
 import * as dotenv from "dotenv";
 const envPath =
   process.env.NODE_ENV === "production" ? "./.env.production" : "./.env";
