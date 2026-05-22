@@ -1,14 +1,14 @@
 {
   "name": "coffee-shop-backend-typescript",
   "version": "1.0.0",
-  "main": "dist/api/index.js",
+  "main": "dist/index.js",
   "engine": {
     "node": "20.x"
   },
   "scripts": {
     "clean": "rimraf /dist",
-    "build": "npm run clean && tsc && tsc-alias",
-    "start": "node dist/api/index.js",
+    "build": "npm run clean && tsc --build && cp -r ./node_modules ./dist/node_modules",
+    "start": "node ./dist/api/index.js",
     "dev:local": "cross-env NODE_ENV=local ts-node-dev --respawn --transpile-only -r tsconfig-paths/register api/index.ts",
     "dev:prod": "cross-env NODE_ENV=production ts-node-dev --respawn --transpile-only -r tsconfig-paths/register api/index.ts",
     "knex": "knex --knexfile src/config/knexfile.ts",
