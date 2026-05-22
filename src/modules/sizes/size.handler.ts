@@ -4,7 +4,7 @@ import {
   insertProductSize,
 } from "./size.repo";
 import { IProductSizeBody } from "./size.model";
-import { IErrResponse, IProductSizeResponse } from "@shared/models/response.model";
+import { IErrResponse, IProductSizeResponse } from "../../shared/models/response.model";
 
 export const getAllSizes = async (
   req: Request,

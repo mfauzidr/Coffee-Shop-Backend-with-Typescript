@@ -1,12 +1,12 @@
 import { Request, Response } from "express";
 import { IUserBody } from "../../modules/users/users.model";
 import { register, getEmail } from "./auth.repo";
-import { IAuthResponse, IErrResponse } from "@shared/models/response.model";
-import { IPayload } from "@shared/models/payload.model";
-import { jwtOptions } from "@middlewares/auth.middleware";
+import { IAuthResponse, IErrResponse } from "../../shared/models/response.model";
+import { IPayload } from "../../shared/models/payload.model";
+import { jwtOptions } from "../../middlewares/auth.middleware";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import { AppError } from "@shared/helper/appError";
+import { AppError } from "../../shared/helper/appError";
 
 export const login = async (
   req: Request<{}, {}, IUserBody>,

@@ -6,7 +6,7 @@ import {
   deleteOrderDetail,
 } from "./orderDetails.repo";
 import { IOrderDetails, IOrderDetailsParams } from "./orderDetails.model";
-import { IErrResponse, IOrderDetailsResponse } from "@shared/models/response.model";
+import { IErrResponse, IOrderDetailsResponse } from "../../shared/models/response.model";
 
 export const getAllOrderDetails = async (
   req: Request,

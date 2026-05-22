@@ -1,6 +1,6 @@
 import { Router } from "express"
 import { createPromos, getAllPromos, getDetailPromos, updatePromos, deletePromos } from "./promos.handler"
-import { authMiddleware } from "@middlewares/auth.middleware"
+import { authMiddleware } from "../../middlewares/auth.middleware"
 
 const promosRouter = Router()
 

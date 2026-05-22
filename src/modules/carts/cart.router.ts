@@ -6,7 +6,7 @@ import {
   insertCart,
   updateCart,
 } from "./cart.handler";
-import { authMiddleware } from "@middlewares/auth.middleware";
+import { authMiddleware } from "../../middlewares/auth.middleware";
 
 const cartRouter = Router();
 

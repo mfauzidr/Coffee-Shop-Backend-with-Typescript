@@ -8,7 +8,7 @@ import "express-async-errors";
 import express, { Request, Response } from "express";
 import morgan from "morgan";
 import cors, { CorsOptions } from "cors";
-import router from "@shared/routes/index";
+import router from "./src/shared/routes/index";
 
 const app = express();
 

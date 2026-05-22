@@ -3,8 +3,8 @@ import path from "path";
 import { NextFunction, RequestHandler } from "express-serve-static-core";
 import { Request, Response } from "express";
 import fs from "fs";
-import { AppParams } from "@shared/models/params.model";
-import { AppError } from "@shared/helper/appError";
+import { AppParams } from "../../src/shared/models/params.model";
+import { AppError } from "../../src/shared/helper/appError";
 
 const multerDisk = diskStorage({
   destination: (req, file, cb) => {

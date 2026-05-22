@@ -6,8 +6,8 @@ import {
   getDetailProduct,
   updateProduct,
 } from "./products.handler";
-import { authMiddleware } from "@middlewares/auth.middleware";
-import { multiCloudUploader, singleCloudUploader } from "@middlewares/upload.middleware";
+import { authMiddleware } from "../../middlewares/auth.middleware";
+import { multiCloudUploader, singleCloudUploader } from "../../middlewares/upload.middleware";
 
 const productsRouter = Router();
 

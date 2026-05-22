@@ -8,8 +8,8 @@ import {
   deactivateUsers,
   restoreUsers,
 } from "../../modules/users/users.handler";
-import { authMiddleware } from "@middlewares/auth.middleware";
-import { singleCloudUploader } from "@middlewares/upload.middleware";
+import { authMiddleware } from "../../middlewares/auth.middleware";
+import { singleCloudUploader } from "../../middlewares/upload.middleware";
 
 const usersRouter = Router();
 

@@ -14,13 +14,13 @@ import {
   IUserQueryParams,
   IForgotPasswordBody,
 } from "../../modules/users/users.model";
-import { IErrResponse, IUserResponse } from "@shared/models/response.model";
-import { cloudinaryUploader } from "@shared/helper/cloudinary";
-import paginLink from "@shared/helper/paginLink";
-import { AppParams } from "@shared/models/params.model";
-import { IPayload } from "@shared/models/payload.model";
+import { IErrResponse, IUserResponse } from "../../shared/models/response.model";
+import { cloudinaryUploader } from "../../shared/helper/cloudinary";
+import paginLink from "../../shared/helper/paginLink";
+import { AppParams } from "../../shared/models/params.model";
+import { IPayload } from "../../shared/models/payload.model";
 import bcrypt from "bcrypt";
-import { AppError } from "@shared/helper/appError";
+import { AppError } from "../../shared/helper/appError";
 
 export const getAllUsers = async (
   req: Request<{}, {}, {}, IUserQueryParams>,

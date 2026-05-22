@@ -1,4 +1,4 @@
-import { logger } from "@shared/logger/logger";
+import { logger } from "../../src/shared/logger/logger";
 import { NextFunction, Request, Response } from "express";
 
 export const requestLogger = (

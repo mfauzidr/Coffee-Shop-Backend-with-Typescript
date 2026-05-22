@@ -3,7 +3,7 @@ import {
   IProductSizes,
   ISizes,
 } from "../../modules/sizes/size.model"
-import db from "@shared/config/pg";
+import db from "../../shared/config/pg";
 import { QueryResult } from "pg";
 
 export const findAllSize = async (): Promise<ISizes[]> => {

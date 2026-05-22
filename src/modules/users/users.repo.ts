@@ -1,5 +1,5 @@
 import { QueryResult } from "pg";
-import db from "@shared/config/pg";
+import db from "../../shared/config/pg";
 import { IUser, IUserBody, IUserQueryParams } from "../../modules/users/users.model";
 
 type QueryValue = string | number | Date | null;

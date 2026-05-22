@@ -1,9 +1,9 @@
 import { NextFunction, Request, Response } from "express";
 import jwt, { SignOptions } from "jsonwebtoken";
 
-import { AppParams } from "@shared/models/params.model"
-import { IAuthResponse } from "@shared/models/response.model";
-import { IPayload } from "@shared/models/payload.model";
+import { AppParams } from "../../src/shared/models/params.model"
+import { IAuthResponse } from "../../src/shared/models/response.model";
+import { IPayload } from "../../src/shared/models/payload.model";
 
 export const jwtOptions: SignOptions = {
   expiresIn: "60m",

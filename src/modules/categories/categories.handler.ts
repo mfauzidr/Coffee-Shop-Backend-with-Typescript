@@ -4,7 +4,7 @@ import {
   insertProductCategory,
 } from "./categories.repo";
 import { IProductCategoryBody } from "./categories.model";
-import { IErrResponse, IProductCategoryResponse } from "@shared/models/response.model";
+import { IErrResponse, IProductCategoryResponse } from "../../shared/models/response.model";
 
 export const getAllCategories = async (
   req: Request,

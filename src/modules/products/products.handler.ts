@@ -17,9 +17,9 @@ import {
 } from "./products.model";
 import { insertProductCategory } from "../../modules/categories/categories.repo";
 import { insertProductSize } from "../../modules/sizes/size.repo";
-import { IErrResponse, IProductsResponse } from "@shared/models/response.model";
-import { cloudinaryUploader } from "@shared/helper/cloudinary";
-import paginLink from "@shared/helper/paginLink";
+import { IErrResponse, IProductsResponse } from "../../shared/models/response.model";
+import { cloudinaryUploader } from "../../shared/helper/cloudinary";
+import paginLink from "../../shared/helper/paginLink";
 import multer from "multer";
 
 export const getAllProducts = async (

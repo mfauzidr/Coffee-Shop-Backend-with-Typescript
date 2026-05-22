@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 import { findAll, findDetails, insert, update, deletePromo } from "./promos.repo"
 import { IPromos, IPromosBody, IPromosParams, IPromosQueryParams, } from "./promos.model"
-import { IErrResponse, IPromosResponse } from '@shared/models/response.model';
+import { IErrResponse, IPromosResponse } from '../../shared/models/response.model';
 
 export const getAllPromos = async (req: Request<{}, {}, {}, IPromosQueryParams>, res: Response<IPromosResponse>) => {
   try {

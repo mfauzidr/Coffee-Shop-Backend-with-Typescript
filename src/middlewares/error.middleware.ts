@@ -1,6 +1,6 @@
-import { AppError } from "@shared/helper/appError";
-import { handlePgError } from "@shared/helper/handlePgError";
-import { logger } from "@shared/logger/logger";
+import { AppError } from "../../src/shared/helper/appError";
+import { handlePgError } from "../../src/shared/helper/handlePgError";
+import { logger } from "../../src/shared/logger/logger";
 import { NextFunction, Request, Response } from "express";
 
 export const globalErrorHandler = (

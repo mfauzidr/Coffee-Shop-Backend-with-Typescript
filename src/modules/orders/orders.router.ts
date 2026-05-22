@@ -1,6 +1,6 @@
 import { Router } from "express"
 import { createOrders, deleteOrders, getAllOrders, getDetailOrders, updateOrders } from "./orders.handler"
-import { authMiddleware } from "@middlewares/auth.middleware"
+import { authMiddleware } from "../../middlewares/auth.middleware"
 
 const ordersRouter = Router()
 
