@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-import usersRouter from "@modules/users/users.router";
+import usersRouter from "../../modules/users/users.router";
 import productsRouter from "@modules/products/products.router";
 import promosRouter from "@modules/promos/promos.router";
 import ordersRouter from "@modules/orders/orders.router";
