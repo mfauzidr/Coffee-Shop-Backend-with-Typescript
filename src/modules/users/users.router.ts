@@ -7,7 +7,7 @@ import {
   updatePassword,
   deactivateUsers,
   restoreUsers,
-} from "@modules/users/users.handler";
+} from "../../modules/users/users.handler";
 import { authMiddleware } from "@middlewares/auth.middleware";
 import { singleCloudUploader } from "@middlewares/upload.middleware";
 

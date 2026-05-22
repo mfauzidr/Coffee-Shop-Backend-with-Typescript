@@ -16,8 +16,8 @@ import {
   ICartQueryParams,
   ICartUpdateBody,
 } from "./cart.model";
-import { findDetails } from "@modules/products/products.repo";
-import { findOneSize, findOneVariant } from "@modules/sizes/size.repo";
+import { findDetails } from "../../modules/products/products.repo";
+import { findOneSize, findOneVariant } from "../../modules/sizes/size.repo";
 import { ICartResponse, IErrResponse } from "@shared/models/response.model";
 import db from "@shared/config/pg";
 import { AppError } from "@shared/helper/appError";

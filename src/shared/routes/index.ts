@@ -1,15 +1,15 @@
 import { Router } from "express";
 
 import usersRouter from "../../modules/users/users.router";
-import productsRouter from "@modules/products/products.router";
-import promosRouter from "@modules/promos/promos.router";
-import ordersRouter from "@modules/orders/orders.router";
-import orderDetailsRouter from "@modules/orderDetails/orderDetails.router";
-import authRouter from "@modules/auth/auth.router";
-import { sizeRouter } from "@modules/sizes/size.router";
-import { variantRouter } from "@modules/variants/variant.router";
-import { categoryRouter } from "@modules/categories/categories.router";
-import cartRouter from "@modules/carts/cart.router";
+import productsRouter from "../../modules/products/products.router";
+import promosRouter from "../../modules/promos/promos.router";
+import ordersRouter from "../../modules/orders/orders.router";
+import orderDetailsRouter from "../../modules/orderDetails/orderDetails.router";
+import authRouter from "../../modules/auth/auth.router";
+import { sizeRouter } from "../../modules/sizes/size.router";
+import { variantRouter } from "../../modules/variants/variant.router";
+import { categoryRouter } from "../../modules/categories/categories.router";
+import cartRouter from "../../modules/carts/cart.router";
 import { globalErrorHandler } from "@middlewares/error.middleware";
 import { requestLogger } from "@middlewares/requestLogger.middleware";
 

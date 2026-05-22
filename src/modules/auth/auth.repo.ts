@@ -1,6 +1,6 @@
 import { QueryResult } from "pg";
 import db from "@shared/config/pg";
-import { IUser, IUserBody } from "@modules/users/users.model";
+import { IUser, IUserBody } from "../../modules/users/users.model";
 
 export const getEmail = async (email: string): Promise<IUser> => {
   const query = `

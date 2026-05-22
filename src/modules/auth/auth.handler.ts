@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { IUserBody } from "@modules/users/users.model";
+import { IUserBody } from "../../modules/users/users.model";
 import { register, getEmail } from "./auth.repo";
 import { IAuthResponse, IErrResponse } from "@shared/models/response.model";
 import { IPayload } from "@shared/models/payload.model";

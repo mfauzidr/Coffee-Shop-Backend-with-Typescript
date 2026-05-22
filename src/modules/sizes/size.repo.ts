@@ -2,7 +2,7 @@ import {
   IProductSizeBody,
   IProductSizes,
   ISizes,
-} from "@modules/sizes/size.model"
+} from "../../modules/sizes/size.model"
 import db from "@shared/config/pg";
 import { QueryResult } from "pg";
 

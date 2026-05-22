@@ -1,12 +1,12 @@
-import { ICart } from "@modules/carts/cart.model";
-import { IProductCategories } from "@modules/categories/categories.model";
-import { IOrderDetails } from "@modules/orderDetails/orderDetails.model";
-import { IOrders } from "@modules/orders/orders.model";
-import { IProducts } from "@modules/products/products.model";
-import { IPromos } from "@modules/promos/promos.model";
-import { IProductSizes, ISizes } from "@modules/sizes/size.model";
-import { IVariants } from "@modules/variants/variant.model";
-import { IUser } from "@modules/users/users.model";
+import { ICart } from "../../modules/carts/cart.model";
+import { IProductCategories } from "../../modules/categories/categories.model";
+import { IOrderDetails } from "../../modules/orderDetails/orderDetails.model";
+import { IOrders } from "../../modules/orders/orders.model";
+import { IProducts } from "../../modules/products/products.model";
+import { IPromos } from "../../modules/promos/promos.model";
+import { IProductSizes, ISizes } from "../../modules/sizes/size.model";
+import { IVariants } from "../../modules/variants/variant.model";
+import { IUser } from "../../modules/users/users.model";
 
 interface IPaginationMeta {
   totalData?: number;

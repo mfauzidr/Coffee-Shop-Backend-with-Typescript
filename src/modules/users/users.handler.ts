@@ -7,13 +7,13 @@ import {
   totalCount,
   getPassword,
   setActiveUser,
-} from "@modules/users/users.repo";
+} from "../../modules/users/users.repo";
 import {
   IUserParams,
   IUserBody,
   IUserQueryParams,
   IForgotPasswordBody,
-} from "@modules/users/users.model";
+} from "../../modules/users/users.model";
 import { IErrResponse, IUserResponse } from "@shared/models/response.model";
 import { cloudinaryUploader } from "@shared/helper/cloudinary";
 import paginLink from "@shared/helper/paginLink";

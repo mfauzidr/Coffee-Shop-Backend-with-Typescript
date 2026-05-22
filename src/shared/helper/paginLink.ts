@@ -1,6 +1,6 @@
 import { Request } from "express-serve-static-core";
 import { AppParams, QueryParams } from "@shared/models/params.model";
-import { IProductsQueryParams } from "@modules/products/products.model";
+import { IProductsQueryParams } from "../../modules/products/products.model";
 
 const paginLink = (
   req: Request<AppParams, {}, {}, QueryParams>,

@@ -2,7 +2,7 @@ import type { Knex } from "knex";
 import path from "path";
 import * as dotenv from "dotenv";
 
-dotenv.config({ path: path.resolve(__dirname, "../../../.env.production") });
+dotenv.config({ path: path.resolve(__dirname, "../.env.production") });
 
 
 const config: { [key: string]: Knex.Config } = {

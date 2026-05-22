@@ -18,12 +18,12 @@ import {
 } from "./orders.model";
 import {
   insert as insertDetails,
-} from "@modules/orderDetails/orderDetails.repo";
+} from "../../modules/orderDetails/orderDetails.repo";
 import { IErrResponse, IOrderResponse } from "@shared/models/response.model";
 import paginLink from "@shared/helper/paginLink";
 import db from "@shared/config/pg";
-import { findOneById } from "@modules/products/products.repo";
-import { findOneSize, findOneVariant } from "@modules/sizes/size.repo";
+import { findOneById } from "../../modules/products/products.repo";
+import { findOneSize, findOneVariant } from "../../modules/sizes/size.repo";
 
 export const getAllOrders = async (
   req: Request<{}, {}, {}, IOrdersQueryParams>,
