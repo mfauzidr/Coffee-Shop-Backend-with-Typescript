@@ -8,6 +8,12 @@ import {
   deleteProduct,
   findOneById,
   insertProductImage,
+  getProductImageCount,
+  resetProductImagesPrimary,
+  deleteProductImage,
+  hasPrimaryProductImage,
+  getFirstProductImageId,
+  setProductImagePrimary,
 } from "./products.repo";
 import {
   IProducts,
@@ -16,11 +22,16 @@ import {
   IProductsQueryParams,
 } from "./products.model";
 import { insertProductCategory } from "../../modules/categories/categories.repo";
-import { insertProductSize } from "../../modules/sizes/size.repo";
+import {
+  insertProductSize,
+  findProductSizeRelation,
+  updateProductSizeRelation,
+} from "../../modules/sizes/size.repo";
 import { IErrResponse, IProductsResponse } from "../../shared/models/response.model";
 import { cloudinaryUploader } from "../../shared/helper/cloudinary";
 import paginLink from "../../shared/helper/paginLink";
 import multer from "multer";
+import { AppError } from "../../shared/helper/appError";
 
 export const getAllProducts = async (
   req: Request<{}, {}, {}, IProductsQueryParams>,
@@ -96,7 +107,6 @@ export const getDetailProduct = async (
     if (product.length === 0) {
       throw new Error("Not Found");
     }
-    console.log(product);
     return res.json({
       success: true,
       message: "OK",
@@ -131,20 +141,20 @@ export const createProduct = async (
   req: Request<{}, {}, IProductsBody>,
   res: Response<IProductsResponse>
 ): Promise<Response> => {
-  try {
     const price = Number(req.body.price);
-    const categoryId = req.body.categoryId
-      ? Number(req.body.categoryId)
-      : undefined;
-    const sizeId = req.body.sizeId ? Number(req.body.sizeId) : undefined;
 
     const productData = {
       name: req.body.name,
       description: req.body.description,
-      price: req.body.price,
+      price,
     };
     const product = await insert(productData);
     const productUuid = product[0].uuid;
+    const rawPrimaryImageIndex = Number(req.body.primaryImageIndex);
+    const primaryImageIndex =
+      Number.isInteger(rawPrimaryImageIndex) && rawPrimaryImageIndex >= 0
+        ? rawPrimaryImageIndex
+        : 0;
 
     if (req.body.categoryId) {
       const productId = product[0].id;
@@ -181,10 +191,7 @@ export const createProduct = async (
         );
 
         if (uploadResult.error) {
-          return res.status(400).json({
-            success: false,
-            message: "Failed to upload image",
-          });
+          throw new AppError("UPLOAD_FAILED", "Failed to upload image", 400);
         }
 
         if (uploadResult.result?.secure_url) {
@@ -192,7 +199,7 @@ export const createProduct = async (
           await insertProductImage({
             productUuid,
             imageUrl: uploadResult.result.secure_url,
-            isPrimary: index === 0,
+            isPrimary: index === primaryImageIndex,
             orderIndex: index + 1,
           });
         }
@@ -204,29 +211,6 @@ export const createProduct = async (
       message: "Create product successfully",
       results: product,
     });
-  } catch (error) {
-    const err = error as IErrResponse;
-
-    if (err.code === "23505") {
-      return res.status(400).json({
-        success: false,
-        message: `Product name already exist.`,
-      });
-    }
-
-    if (err.code === "23502") {
-      return res.status(400).json({
-        success: false,
-        message: `${err.column} Cannot be empty`,
-      });
-    }
-
-    console.log(err);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
-  }
 };
 
 export const updateProduct = async (
@@ -235,14 +219,105 @@ export const updateProduct = async (
 ): Promise<Response> => {
   const { uuid } = req.params;
   try {
-    const data: Omit<IProductsBody, "categoryId" | "sizeId"> = {
-      ...req.body,
-    };
-    
-    const product = await update(uuid, data);
-    if (product.length === 0) {
-      throw new Error("Not Found");
+    const {
+      categoryId,
+      sizeId,
+      primaryImageIndex,
+      deleteImageIds,
+      ...bodyWithoutRelations
+    } = req.body;
+
+    const data = Object.fromEntries(
+      Object.entries(bodyWithoutRelations).filter(([, value]) => {
+        if (value === undefined || value === null) return false;
+        if (typeof value === "string" && value.trim() === "") return false;
+        return true;
+      })
+    ) as Partial<
+      Omit<IProductsBody, "categoryId" | "sizeId" | "primaryImageIndex" | "deleteImageIds">
+    >;
+
+    let product = [] as IProducts[];
+    if (Object.keys(data).length > 0) {
+      product = await update(uuid, data as Omit<IProductsBody, "categoryId" | "sizeId">);
+      if (product.length === 0) {
+        throw new Error("Not Found");
+      }
+    } else {
+      product = await findOneById(uuid);
+      if (product.length === 0) {
+        throw new Error("Not Found");
+      }
     }
+
+    if (req.body.deleteImageIds && Array.isArray(req.body.deleteImageIds)) {
+      for (const imageId of req.body.deleteImageIds) {
+        const deleted = await deleteProductImage(uuid, imageId);
+        if (deleted === 0) {
+          throw new AppError(
+            "NOT_FOUND",
+            `Image id ${imageId} not found for this product`,
+            404,
+          );
+        }
+      }
+
+      const primaryExists = await hasPrimaryProductImage(uuid);
+      if (!primaryExists) {
+        const firstImageId = await getFirstProductImageId(uuid);
+        if (firstImageId) {
+          await setProductImagePrimary(firstImageId);
+        }
+      }
+    }
+
+    if (req.body.sizeId) {
+      const productId = product[0].id;
+      const sizeId = Number(req.body.sizeId);
+      const existingSizeRelation = await findProductSizeRelation(productId);
+
+      if (existingSizeRelation.length > 0) {
+        await updateProductSizeRelation(productId, sizeId);
+      } else {
+        await insertProductSize({ productId, sizeId });
+      }
+    }
+
+    if (req.files && Array.isArray(req.files)) {
+      const rawPrimaryImageIndex = Number(req.body.primaryImageIndex);
+      const primaryImageIndex =
+        Number.isInteger(rawPrimaryImageIndex) && rawPrimaryImageIndex >= 0
+          ? rawPrimaryImageIndex
+          : 0;
+      const existingImageCount = await getProductImageCount(uuid);
+      await resetProductImagesPrimary(uuid);
+
+      for (const [index, file] of (
+        req.files as Express.Multer.File[]
+      ).entries()) {
+        const fakeReq = { file } as Request;
+
+        const uploadResult = await cloudinaryUploader(
+          fakeReq,
+          "product",
+          uuid
+        );
+
+        if (uploadResult.error) {
+          throw new AppError("UPLOAD_FAILED", "Failed to upload image", 400);
+        }
+
+        if (uploadResult.result?.secure_url) {
+          await insertProductImage({
+            productUuid: uuid,
+            imageUrl: uploadResult.result.secure_url,
+            isPrimary: index === primaryImageIndex,
+            orderIndex: existingImageCount + index + 1,
+          });
+        }
+      }
+    }
+
     if (product) {
       return res.json({
         success: true,

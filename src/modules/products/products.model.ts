@@ -7,6 +7,9 @@ export interface IProducts extends IProductsBody {
   rating?: number;
   createdAt: Date;
   updatedAt: Date;
+  image?: string | string[];
+  primaryImage?: string;
+  otherImages?: string[];
   images?: IProductImage[];
 }
 
@@ -39,4 +42,6 @@ export interface IProductsBody {
   price: number;
   categoryId?: number;
   sizeId?: number;
+  primaryImageIndex?: number;
+  deleteImageIds?: number[];
 }

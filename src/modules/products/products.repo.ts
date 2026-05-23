@@ -134,11 +134,19 @@ export const findAll = async ({
       "p"."uuid",
       "p"."createdAt",
       "p"."updatedAt",
-      "pi"."imageUrl" AS "image"
+      "pi"."imageUrl" AS "image",
+      "pi"."imageUrl" AS "primaryImage",
+      COALESCE("oi"."otherImages", '[]') AS "otherImages"
     FROM "products" "p"
     LEFT JOIN "productCategories" "pc" ON "pc"."productId" = "p"."id"
     LEFT JOIN "categories" "c" ON "pc"."categoryId" = "c"."id"
     LEFT JOIN "productImages" "pi" ON "pi"."productUuid" = "p"."uuid" AND "pi"."isPrimary" = true
+    LEFT JOIN (
+      SELECT "productUuid", json_agg("imageUrl") AS "otherImages"
+      FROM "productImages"
+      WHERE "isPrimary" = false
+      GROUP BY "productUuid"
+    ) "oi" ON "oi"."productUuid" = "p"."uuid"
     ${whereQuery}
     ${orderByClause}
     LIMIT ${limit} OFFSET ${offset}
@@ -169,6 +177,19 @@ export const findDetails = async (
       "c"."id" AS "categoryId", 
       "pr"."rate" AS "rating",
       "ps"."sizeId" AS "sizeId", 
+      MAX("pi"."imageUrl") FILTER (WHERE "pi"."isPrimary" = true) AS "primaryImage",
+      COALESCE(
+        json_agg(DISTINCT jsonb_build_object(
+          'id', "pi"."id",
+          'imageUrl', "pi"."imageUrl",
+          'isPrimary', "pi"."isPrimary"
+        )) FILTER (WHERE "pi"."id" IS NOT NULL),
+        '[]'
+      ) AS "images",
+      COALESCE(
+        json_agg(DISTINCT "pi"."imageUrl") FILTER (WHERE "pi"."isPrimary" = false),
+        '[]'
+      ) AS "otherImages",
     COALESCE(
       json_agg(DISTINCT "pi"."imageUrl") FILTER (WHERE "pi"."id" IS NOT NULL),
       '[]'
@@ -254,6 +275,69 @@ export const findOneById = async (uuid: string): Promise<IProducts[]> => {
   const values: string[] = [uuid];
   const { rows } = await db.query(query, values);
   return rows;
+};
+
+export const deleteProductImage = async (
+  productUuid: string,
+  imageId: number,
+): Promise<number> => {
+  const query = `
+    DELETE FROM "productImages"
+    WHERE "productUuid" = $1 AND "id" = $2
+    RETURNING *
+  `;
+  const values = [productUuid, imageId];
+  const result = await db.query(query, values);
+  return result.rows.length;
+};
+
+export const hasPrimaryProductImage = async (
+  productUuid: string,
+): Promise<boolean> => {
+  const query = `
+    SELECT EXISTS(
+      SELECT 1 FROM "productImages"
+      WHERE "productUuid" = $1 AND "isPrimary" = true
+    ) AS "exists"
+  `;
+  const result = await db.query<{ exists: boolean }>(query, [productUuid]);
+  return result.rows[0]?.exists ?? false;
+};
+
+export const getFirstProductImageId = async (
+  productUuid: string,
+): Promise<number | null> => {
+  const query = `
+    SELECT "id" FROM "productImages"
+    WHERE "productUuid" = $1
+    ORDER BY "orderIndex" ASC
+    LIMIT 1
+  `;
+  const result = await db.query<{ id: number }>(query, [productUuid]);
+  return result.rows[0]?.id ?? null;
+};
+
+export const setProductImagePrimary = async (
+  imageId: number,
+): Promise<void> => {
+  const query = `
+    UPDATE "productImages"
+    SET "isPrimary" = true
+    WHERE "id" = $1
+  `;
+  await db.query(query, [imageId]);
+};
+
+export const getProductImageCount = async (productUuid: string): Promise<number> => {
+  const query = `SELECT COUNT(*) AS "count" FROM "productImages" WHERE "productUuid" = $1`;
+  const values = [productUuid];
+  const result = await db.query<{ count: string }>(query, values);
+  return Number(result.rows[0]?.count || 0);
+};
+
+export const resetProductImagesPrimary = async (productUuid: string): Promise<void> => {
+  const query = `UPDATE "productImages" SET "isPrimary" = false WHERE "productUuid" = $1`;
+  await db.query(query, [productUuid]);
 };
 
 export const insertProductImage = async ({

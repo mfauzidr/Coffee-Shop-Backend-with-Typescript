@@ -59,3 +59,31 @@ export const insertProductSize = async (
   const result: QueryResult<IProductSizes> = await db.query(query, values);
   return result.rows;
 };
+
+export const findProductSizeRelation = async (
+  productId: number,
+): Promise<IProductSizes[]> => {
+  const query = `
+    SELECT *
+    FROM "sizeProductRelations"
+    WHERE "productId" = $1
+  `;
+  const values = [productId];
+  const result: QueryResult<IProductSizes> = await db.query(query, values);
+  return result.rows;
+};
+
+export const updateProductSizeRelation = async (
+  productId: number,
+  sizeId: number,
+): Promise<IProductSizes[]> => {
+  const query = `
+    UPDATE "sizeProductRelations"
+    SET "sizeId" = $2
+    WHERE "productId" = $1
+    RETURNING *
+  `;
+  const values = [productId, sizeId];
+  const result: QueryResult<IProductSizes> = await db.query(query, values);
+  return result.rows;
+};
