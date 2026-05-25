@@ -11,7 +11,7 @@
     "start": "node ./dist/index.js",
     "dev:local": "cross-env NODE_ENV=local ts-node-dev --respawn --transpile-only -r tsconfig-paths/register api/index.ts",
     "dev:prod": "cross-env NODE_ENV=production ts-node-dev --respawn --transpile-only -r tsconfig-paths/register api/index.ts",
-    "knex": "knex --knexfile src/config/knexfile.ts",
+    "knex": "knex --knexfile src/shared/config/knexfile.ts",
     "migrate": "npm run knex migrate:latest",
     "seed": "npm run knex seed:run"
   },

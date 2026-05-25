@@ -37,63 +37,47 @@ export const getAllProducts = async (
   req: Request<{}, {}, {}, IProductsQueryParams>,
   res: Response<IProductsResponse>
 ) => {
-  try {
-    const { priceRange } = req.query;
+  const { priceRange } = req.query;
 
-    let minPrice: number;
-    let maxPrice: number;
+  let minPrice: number;
+  let maxPrice: number;
 
-    if (priceRange && Array.isArray(priceRange) && priceRange.length === 2) {
-      [minPrice, maxPrice] = priceRange;
-    } else {
-      minPrice = 1000;
-      maxPrice = Infinity;
-    }
-
-    const query = {
-      ...req.query,
-      minPrice,
-      maxPrice,
-    };
-
-    const products = await findAll(query);
-
-    if (products.length < 1) {
-      throw new Error("no_data");
-    }
-
-    const limit = req.query.limit || "6";
-    const count = await totalCount(query);
-    const currentPage = parseInt((req.query.page as string) || "1");
-    const totalData = count;
-    const totalPage = Math.ceil(totalData / parseInt(limit as string));
-
-    return res.status(200).json({
-      meta: {
-        totalData,
-        totalPage,
-        currentPage,
-        nextPage: currentPage != totalPage ? paginLink(req, "next") : null,
-        prevPage: currentPage > 1 ? paginLink(req, "previous") : null,
-      },
-      message: `List all products. ${count} data found`,
-      results: products,
-    });
-  } catch (error) {
-    const err = error as IErrResponse;
-    if (err.message === "no_data") {
-      return res.status(404).json({
-        success: false,
-        message: "Products not found",
-      });
-    }
-
-    console.log(err);
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
+  if (priceRange && Array.isArray(priceRange) && priceRange.length === 2) {
+    [minPrice, maxPrice] = priceRange;
+  } else {
+    minPrice = 1000;
+    maxPrice = Infinity;
   }
+
+  const query = {
+    ...req.query,
+    minPrice,
+    maxPrice,
+  };
+
+  const products = await findAll(query);
+
+  if (products.length < 1) {
+    throw new AppError("NO_DATA", "Products not found", 404);
+  }
+
+  const limit = req.query.limit || "6";
+  const count = await totalCount(query);
+  const currentPage = parseInt((req.query.page as string) || "1");
+  const totalData = count;
+  const totalPage = Math.ceil(totalData / parseInt(limit as string));
+
+  return res.status(200).json({
+    meta: {
+      totalData,
+      totalPage,
+      currentPage,
+      nextPage: currentPage != totalPage ? paginLink(req, "next") : null,
+      prevPage: currentPage > 1 ? paginLink(req, "previous") : null,
+    },
+    message: `List all products. ${count} data found`,
+    results: products,
+  });
 };
 
 export const getDetailProduct = async (
@@ -101,40 +85,15 @@ export const getDetailProduct = async (
   res: Response<IProductsResponse>
 ): Promise<Response> => {
   const { uuid } = req.params;
-
-  try {
-    const product = await findDetails(uuid as string);
-    if (product.length === 0) {
-      throw new Error("Not Found");
-    }
-    return res.json({
-      success: true,
-      message: "OK",
-      results: product,
-    });
-  } catch (error) {
-    const err = error as IErrResponse;
-
-    if (err.message === "Not Found") {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found",
-      });
-    }
-
-    if (err.code === "22P02") {
-      return res.status(400).json({
-        success: false,
-        message: `Invalid UUID format.`,
-      });
-    }
-
-    console.log(err);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+  const product = await findDetails(uuid as string);
+  if (product.length === 0) {
+    throw new AppError("NOT_FOUND", "Product not found", 404);
   }
+  return res.json({
+    success: true,
+    message: "OK",
+    results: product,
+  });
 };
 
 export const createProduct = async (
@@ -241,12 +200,12 @@ export const updateProduct = async (
     if (Object.keys(data).length > 0) {
       product = await update(uuid, data as Omit<IProductsBody, "categoryId" | "sizeId">);
       if (product.length === 0) {
-        throw new Error("Not Found");
+        throw new AppError("NOT_FOUND", "Products not found", 404);
       }
     } else {
       product = await findOneById(uuid);
       if (product.length === 0) {
-        throw new Error("Not Found");
+        throw new AppError("NOT_FOUND", "Products not found", 404);
       }
     }
 
@@ -325,39 +284,29 @@ export const updateProduct = async (
         results: product,
       });
     }
-    return res.status(404).json({
-      success: false,
-      message: "Products not found",
-    });
+    throw new AppError("NOT_FOUND", "Products not found", 404);
   } catch (error) {
-    const err = error as IErrResponse;
-
-    if (err instanceof multer.MulterError) {
-      if (err.message === "Incorrect File") {
-        return res.status(400).json({
-          success: false,
-          message: "Incorrect file type. Only jpg, png, and jpeg are allowed.",
-        });
+    if (error instanceof multer.MulterError) {
+      if (error.message === "Incorrect File") {
+        throw new AppError(
+          "INVALID_FILE_TYPE",
+          "Incorrect file type. Only jpg, png, and jpeg are allowed.",
+          400,
+        );
+      }
+      if (error.code === "LIMIT_FILE_SIZE") {
+        throw new AppError("LIMIT_FILE_SIZE", "File is too large. Maximum size is 1MB.", 400);
       }
     }
 
-    if (err.message === "File too large") {
-      return res.status(400).json({
-        success: false,
-        message: "File is too large. Maximum size is 1MB.",
-      });
+    if (
+      error instanceof Error &&
+      error.message === "File too large"
+    ) {
+      throw new AppError("LIMIT_FILE_SIZE", "File is too large. Maximum size is 1MB.", 400);
     }
-    if (err.code === "22P02") {
-      return res.status(400).json({
-        success: false,
-        message: `Invalid UUID format.`,
-      });
-    }
-    console.log(error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+
+    throw error;
   }
 };
 
@@ -367,37 +316,17 @@ export const deleteProducts = async (
 ): Promise<Response> => {
   const { uuid } = req.params;
 
-  try {
-    const product = await deleteProduct(uuid);
+  const product = await deleteProduct(uuid);
 
-    if (product.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found",
-      });
-    }
-
-    return res.json({
-      success: true,
-      message: "Delete success",
-      results: product,
-    });
-  } catch (error) {
-    const err = error as IErrResponse;
-
-    if (err.code === "22P02") {
-      return res.status(400).json({
-        success: false,
-        message: `Invalid UUID format.`,
-      });
-    }
-
-    console.error(JSON.stringify(error));
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+  if (product.length === 0) {
+    throw new AppError("NOT_FOUND", "Product not found", 404);
   }
+
+  return res.json({
+    success: true,
+    message: "Delete success",
+    results: product,
+  });
 };
 
 export const getOneById = async (
@@ -405,38 +334,13 @@ export const getOneById = async (
   res: Response<IProductsResponse>
 ): Promise<Response> => {
   const { uuid } = req.params;
-
-  try {
-    const product = await findOneById(uuid);
-    if (product.length === 0) {
-      throw new Error("Not Found");
-    }
-    return res.json({
-      success: true,
-      message: "OK",
-      results: product,
-    });
-  } catch (error) {
-    const err = error as IErrResponse;
-
-    if (err.message === "Not Found") {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found",
-      });
-    }
-
-    if (err.code === "22P02") {
-      return res.status(400).json({
-        success: false,
-        message: `Invalid UUID format.`,
-      });
-    }
-
-    console.log(err);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+  const product = await findOneById(uuid);
+  if (product.length === 0) {
+    throw new AppError("NOT_FOUND", "Product not found", 404);
   }
+  return res.json({
+    success: true,
+    message: "OK",
+    results: product,
+  });
 };

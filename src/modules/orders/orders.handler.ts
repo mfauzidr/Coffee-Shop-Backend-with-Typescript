@@ -19,56 +19,42 @@ import {
 import {
   insert as insertDetails,
 } from "../../modules/orderDetails/orderDetails.repo";
-import { IErrResponse, IOrderResponse } from "../../shared/models/response.model";
+import { IOrderResponse } from "../../shared/models/response.model";
 import paginLink from "../../shared/helper/paginLink";
 import db from "../../shared/config/pg";
 import { findOneById } from "../../modules/products/products.repo";
 import { findOneSize, findOneVariant } from "../../modules/sizes/size.repo";
+import { AppError } from "../../shared/helper/appError";
 
 export const getAllOrders = async (
   req: Request<{}, {}, {}, IOrdersQueryParams>,
   res: Response<IOrderResponse>
 ) => {
-  try {
-    let orders: IOrders[];
-    let count: number;
-    orders = await findAll(req.query);
+  let orders: IOrders[];
+  let count: number;
+  orders = await findAll(req.query);
 
-    if (orders.length < 1) {
-      throw new Error("no_data");
-    }
-    const limit = req.query.limit || 6;
-    count = await totalCount(req.query);
-    const currentPage = parseInt((req.query.page as string) || "1");
-    const totalData = count;
-    const totalPage = Math.ceil(totalData / parseInt(limit as string));
-
-    return res.json({
-      meta: {
-        totalData,
-        totalPage,
-        currentPage,
-        nextPage: currentPage != totalPage ? paginLink(req, "next") : null,
-        prevPage: currentPage > 1 ? paginLink(req, "previous") : null,
-      },
-      message: `List all orders. ${count} data found`,
-      results: orders,
-    });
-  } catch (error) {
-    const err = error as IErrResponse;
-    if (err.message === "no_data") {
-      return res.status(404).json({
-        success: false,
-        message: "Orders not found",
-      });
-    }
-
-    console.error(err);
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
+  if (orders.length < 1) {
+    throw new AppError("NO_DATA", "Orders not found", 404);
   }
+
+  const limit = req.query.limit || 6;
+  count = await totalCount(req.query);
+  const currentPage = parseInt((req.query.page as string) || "1");
+  const totalData = count;
+  const totalPage = Math.ceil(totalData / parseInt(limit as string));
+
+  return res.json({
+    meta: {
+      totalData,
+      totalPage,
+      currentPage,
+      nextPage: currentPage != totalPage ? paginLink(req, "next") : null,
+      prevPage: currentPage > 1 ? paginLink(req, "previous") : null,
+    },
+    message: `List all orders. ${count} data found`,
+    results: orders,
+  });
 };
 
 export const getDetailOrders = async (
@@ -76,36 +62,17 @@ export const getDetailOrders = async (
   res: Response<IOrderResponse>
 ) => {
   const { uuid } = req.params;
-  try {
-    const orders = await findDetails(uuid);
+  const orders = await findDetails(uuid);
 
-    if (orders.length < 1) {
-      return res.status(404).json({
-        success: false,
-        message: "Order details not found",
-      });
-    }
-    return res.json({
-      success: true,
-      message: "OK",
-      results: orders,
-    });
-  } catch (error) {
-    const err = error as IErrResponse;
-
-    if (err.code === "22P02") {
-      return res.status(400).json({
-        success: false,
-        message: `Invalid UUID format.`,
-      });
-    }
-
-    console.log(err);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+  if (orders.length < 1) {
+    throw new AppError("NO_DATA", "Order details not found", 404);
   }
+
+  return res.json({
+    success: true,
+    message: "OK",
+    results: orders,
+  });
 };
 
 export const createOrders = async (
@@ -126,9 +93,11 @@ export const createOrders = async (
         : variantId;
     qty = typeof qty === "string" ? qty.split(",").map(Number) : qty;
   } catch (error) {
-    return res.status(400).json({
-      message: "Invalid input format for productId, sizeId, variantId, or qty",
-    });
+    throw new AppError(
+      "INVALID_INPUT",
+      "Invalid input format for productId, sizeId, variantId, or qty",
+      400,
+    );
   }
 
   if (
@@ -137,98 +106,73 @@ export const createOrders = async (
     !Array.isArray(variantId) ||
     !Array.isArray(qty)
   ) {
-    return res.status(400).json({
-      message:
-        "ProductId, sizeId, ProductVariantId, and Quantity should be arrays",
-    });
+    throw new AppError(
+      "INVALID_INPUT",
+      "ProductId, sizeId, ProductVariantId, and Quantity should be arrays",
+      400,
+    );
   }
 
+  const client = await db.connect();
   try {
-    const client = await db.connect();
-    try {
-      await client.query("BEGIN");
+    await client.query("BEGIN");
 
-      const orderData = {
-        userId,
-        fullName,
-        email,
-        deliveryAddress,
-        deliveryMethod,
-      };
+    const orderData = {
+      userId,
+      fullName,
+      email,
+      deliveryAddress,
+      deliveryMethod,
+    };
 
-      const order = await insertOrder(orderData);
-      let subtotal = 0;
-      let image = "";
+    const order = await insertOrder(orderData);
+    let subtotal = 0;
+    let image = "";
 
-      const loop = await Promise.all(
-        productId.map(async (productId: string, index: number) => {
-          const orderId = order[0].id;
-          const productSizeId = sizeId[index];
-          const productVariantId = variantId[index];
-          const quantity = qty[index];
+    await Promise.all(
+      productId.map(async (productId: string, index: number) => {
+        const orderId = order[0].id;
+        const productSizeId = sizeId[index];
+        const productVariantId = variantId[index];
+        const quantity = qty[index];
 
-          const detailData = {
-            orderId,
-            productId,
-            productSizeId,
-            productVariantId,
-            quantity,
-          };
+        const detailData = {
+          orderId,
+          productId,
+          productSizeId,
+          productVariantId,
+          quantity,
+        };
 
-          await insertDetails(detailData);
+        await insertDetails(detailData);
 
-          const productResult = await findOneById(productId);
-          const sizeResult = await findOneSize(productSizeId);
-          const variantResult = await findOneVariant(productVariantId);
+        const productResult = await findOneById(productId);
+        const sizeResult = await findOneSize(productSizeId);
+        const variantResult = await findOneVariant(productVariantId);
 
-          // if (index === 0 && productResult[0]?.image) {
-          //   image = productResult[0].image;
-          // }
+        const total =
+          (productResult[0].price +
+            sizeResult[0].additionalPrice +
+            variantResult[0].additionalPrice) *
+          quantity;
 
-          const total =
-            (productResult[0].price +
-              sizeResult[0].additionalPrice +
-              variantResult[0].additionalPrice) *
-            quantity;
+        subtotal += total + total * 0.1;
+      })
+    );
 
-          subtotal += total + total * 0.1;
-        })
-      );
+    const data: Partial<IOrders> = { subtotal, image };
+    const newOrder = await update(order[0].uuid, data);
+    await client.query("COMMIT");
 
-      const data: Partial<IOrders> = { subtotal, image };
-
-      const newOrder = await update(order[0].uuid, data);
-      await client.query("COMMIT");
-
-      res.status(201).json({
-        message: "Order created successfully",
-        results: newOrder,
-      });
-    } catch (error) {
-      await client.query("ROLLBACK");
-      const err = error as IErrResponse;
-      console.log(err);
-      res.status(500).json({
-        message: "Error creating order",
-        err: err.message,
-      });
-    } finally {
-      client.release();
-    }
+    return res.status(201).json({
+      message: "Order created successfully",
+      results: newOrder,
+    });
   } catch (error) {
-    const err = error as IErrResponse;
-    console.log(err);
-    if (err.code === "23502") {
-      return res.status(400).json({
-        success: false,
-        message: `${err.column} Cannot be empty`,
-      });
-    } else {
-      res.status(500).json({
-        message: "Database connection error",
-        err: err.message,
-      });
-    }
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
   }
 };
 
@@ -240,35 +184,15 @@ export const updateOrders = async (
   const data = {
     ...req.body,
   };
-  try {
-    const orders = await update(uuid, data);
-    if (orders.length < 1) {
-      return res.status(404).json({
-        success: false,
-        message: "Order not found",
-      });
-    }
-    return res.json({
-      success: true,
-      message: "Update Success",
-      results: orders,
-    });
-  } catch (error) {
-    const err = error as IErrResponse;
-    console.error(err);
-    if (err.code === "22P02") {
-      return res.status(400).json({
-        success: false,
-        message: `Invalid UUID format.`,
-      });
-    }
-
-    console.error(err);
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
+  const orders = await update(uuid, data);
+  if (orders.length < 1) {
+    throw new AppError("NOT_FOUND", "Order not found", 404);
   }
+  return res.json({
+    success: true,
+    message: "Update Success",
+    results: orders,
+  });
 };
 
 export const deleteOrders = async (
@@ -276,36 +200,15 @@ export const deleteOrders = async (
   res: Response<IOrderResponse>
 ) => {
   const { uuid } = req.params;
+  const order = await deleteOrder(uuid);
 
-  try {
-    const order = await deleteOrder(uuid);
-
-    if (order.length < 1) {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found",
-      });
-    }
-
-    return res.json({
-      success: true,
-      message: "Delete success",
-      results: order,
-    });
-  } catch (error) {
-    const err = error as IErrResponse;
-
-    if (err.code === "22P02") {
-      return res.status(400).json({
-        success: false,
-        message: `Invalid UUID format.`,
-      });
-    }
-
-    console.error(JSON.stringify(error));
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+  if (order.length < 1) {
+    throw new AppError("NOT_FOUND", "Product not found", 404);
   }
+
+  return res.json({
+    success: true,
+    message: "Delete success",
+    results: order,
+  });
 };

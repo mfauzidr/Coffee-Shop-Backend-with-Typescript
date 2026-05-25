@@ -4,7 +4,7 @@ import {
   insertProductCategory,
 } from "./categories.repo";
 import { IProductCategoryBody } from "./categories.model";
-import { IErrResponse, IProductCategoryResponse } from "../../shared/models/response.model";
+import { IProductCategoryResponse } from "../../shared/models/response.model";
 
 export const getAllCategories = async (
   req: Request,
@@ -13,7 +13,7 @@ export const getAllCategories = async (
   const size = await findAllCategories();
   return res.json({
     success: true,
-    message: "List all size",
+    message: "List all categories",
     results: size,
   });
 };
@@ -21,26 +21,11 @@ export const getAllCategories = async (
 export const createProductCategories = async (
   req: Request<{}, {}, IProductCategoryBody>,
   res: Response<IProductCategoryResponse>
-) => {
-  try {
-    const results = await insertProductCategory(req.body);
-    return res.json({
-      success: true,
-      message: "Create product category successfully",
-      results: results,
-    });
-  } catch (error) {
-    const err = error as IErrResponse;
-    console.error(JSON.stringify(error));
-    if (err.code === "23502") {
-      return res.status(400).json({
-        success: false,
-        message: `${err.column} cannot be empty`,
-      });
-    }
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
-  }
+): Promise<Response> => {
+  const results = await insertProductCategory(req.body);
+  return res.json({
+    success: true,
+    message: "Create product category successfully",
+    results,
+  });
 };
